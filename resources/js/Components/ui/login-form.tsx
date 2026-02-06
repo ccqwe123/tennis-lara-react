@@ -1,5 +1,5 @@
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/Components/ui/button"
 import { Card, CardContent } from "@/Components/ui/card"
 import {
     Field,
@@ -8,7 +8,7 @@ import {
     FieldLabel,
     FieldSeparator,
 } from "@/Components/ui/field"
-import { Input } from "@/components/ui/input"
+import { Input } from "@/Components/ui/input"
 
 export function LoginForm({
     className,
