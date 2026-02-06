@@ -39,6 +39,15 @@ import {
     SelectValue,
 } from "@/Components/ui/select"
 import { cn } from "@/lib/utils"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/Components/ui/pagination"
 
 interface PageProps {
     auth: any
@@ -57,6 +66,9 @@ interface PageProps {
             is_expiring: boolean
         }[]
         links: any[]
+        current_page: number
+        per_page: number
+        total: number
     }
     filters: {
         search?: string
@@ -307,23 +319,54 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
                             </Table>
                         </CardContent>
                         {users.links && (
-                            <CardFooter className="flex justify-center border-t p-4">
-                                <div className="flex gap-1">
-                                    {users.links.map((link: any, i: number) => (
-                                        link.url ? (
-                                            <Link key={i} href={link.url}>
-                                                <Button
-                                                    variant={link.active ? "default" : "outline"}
-                                                    size="sm"
-                                                    className={cn(link.active && "bg-emerald-600 hover:bg-emerald-700")}
-                                                    dangerouslySetInnerHTML={{ __html: link.label }}
-                                                />
-                                            </Link>
-                                        ) : (
-                                            <Button key={i} variant="outline" size="sm" disabled dangerouslySetInnerHTML={{ __html: link.label }} />
-                                        )
-                                    ))}
-                                </div>
+                            <CardFooter className="flex justify-between items-center border-t p-4">
+                                <p className="text-sm text-gray-600">
+                                    Showing {(users.current_page - 1) * users.per_page + 1} to{" "}
+                                    {Math.min(users.current_page * users.per_page, users.total)} of{" "}
+                                    {users.total} members
+                                </p>
+                                <Pagination className="w-auto mx-0">
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                href={users.links[0]?.url || '#'}
+                                                isActive={!users.links[0]?.url}
+                                                className={!users.links[0]?.url ? 'pointer-events-none opacity-50' : ''}
+                                                preserveState
+                                            />
+                                        </PaginationItem>
+
+                                        {users.links.slice(1, -1).map((link: any, i: number) => {
+                                            if (link.label === '...') {
+                                                return (
+                                                    <PaginationItem key={i}>
+                                                        <PaginationEllipsis />
+                                                    </PaginationItem>
+                                                )
+                                            }
+                                            return (
+                                                <PaginationItem key={i}>
+                                                    <PaginationLink
+                                                        href={link.url || '#'}
+                                                        isActive={link.active}
+                                                        preserveState
+                                                    >
+                                                        <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                                                    </PaginationLink>
+                                                </PaginationItem>
+                                            )
+                                        })}
+
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                href={users.links[users.links.length - 1]?.url || '#'}
+                                                isActive={!users.links[users.links.length - 1]?.url}
+                                                className={!users.links[users.links.length - 1]?.url ? 'pointer-events-none opacity-50' : ''}
+                                                preserveState
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
                             </CardFooter>
                         )}
                     </Card>

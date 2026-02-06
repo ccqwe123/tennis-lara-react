@@ -20,9 +20,7 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'index'])->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
@@ -62,5 +60,8 @@ Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update
 Route::post('/settings/qr-code', [App\Http\Controllers\SettingController::class, 'uploadQrCode'])->name('settings.qr-code.upload');
 Route::delete('/settings/qr-code', [App\Http\Controllers\SettingController::class, 'deleteQrCode'])->name('settings.qr-code.delete');
 
+// Reports
+Route::get('/reports/bookings', [App\Http\Controllers\ReportsController::class, 'bookingReport'])->name('reports.bookings');
+Route::get('/reports/bookings/export', [App\Http\Controllers\ReportsController::class, 'exportBookingReport'])->name('reports.bookings.export');
 
 require __DIR__ . '/auth.php';

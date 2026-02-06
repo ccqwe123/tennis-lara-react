@@ -8,6 +8,7 @@ enum UserType: string
     case STAFF = 'staff';
     case MEMBER = 'member';
     case NON_MEMBER = 'non-member';
+    case STUDENT = 'student';
 
     /**
      * Get all user types as an array of values.
@@ -27,6 +28,7 @@ enum UserType: string
             self::STAFF => 'Staff',
             self::MEMBER => 'Member',
             self::NON_MEMBER => 'Non-Member',
+            self::STUDENT => 'Student',
         };
     }
 

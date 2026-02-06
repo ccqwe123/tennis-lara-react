@@ -30,6 +30,15 @@ import {
 } from "@/Components/ui/popover"
 import { Calendar as CalendarComponent } from "@/Components/ui/calendar"
 import { cn } from "@/lib/utils"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/Components/ui/pagination"
 
 interface Booking {
     id: number
@@ -345,25 +354,49 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                         {Math.min(bookings.current_page * bookings.per_page, bookings.total)} of{" "}
                                         {bookings.total} results
                                     </p>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handlePageChange(bookings.links[0]?.url)}
-                                            disabled={bookings.current_page === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                            Previous
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handlePageChange(bookings.links[bookings.links.length - 1]?.url)}
-                                            disabled={bookings.current_page === bookings.last_page}
-                                        >
-                                            Next
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
+                                    <div>
+                                        <Pagination className="w-auto mx-0">
+                                            <PaginationContent>
+                                                <PaginationItem>
+                                                    <PaginationPrevious
+                                                        href={bookings.links[0].url || '#'}
+                                                        isActive={!bookings.links[0].url}
+                                                        className={!bookings.links[0].url ? 'pointer-events-none opacity-50' : ''}
+                                                        preserveState
+                                                    />
+                                                </PaginationItem>
+
+                                                {bookings.links.slice(1, -1).map((link, i) => {
+                                                    if (link.label === '...') {
+                                                        return (
+                                                            <PaginationItem key={i}>
+                                                                <PaginationEllipsis />
+                                                            </PaginationItem>
+                                                        )
+                                                    }
+                                                    return (
+                                                        <PaginationItem key={i}>
+                                                            <PaginationLink
+                                                                href={link.url || '#'}
+                                                                isActive={link.active}
+                                                                preserveState
+                                                            >
+                                                                <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                                                            </PaginationLink>
+                                                        </PaginationItem>
+                                                    )
+                                                })}
+
+                                                <PaginationItem>
+                                                    <PaginationNext
+                                                        href={bookings.links[bookings.links.length - 1].url || '#'}
+                                                        isActive={!bookings.links[bookings.links.length - 1].url}
+                                                        className={!bookings.links[bookings.links.length - 1].url ? 'pointer-events-none opacity-50' : ''}
+                                                        preserveState
+                                                    />
+                                                </PaginationItem>
+                                            </PaginationContent>
+                                        </Pagination>
                                     </div>
                                 </div>
                             )}

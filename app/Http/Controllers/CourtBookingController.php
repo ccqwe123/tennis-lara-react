@@ -195,28 +195,31 @@ class CourtBookingController extends Controller
 
         $settings = Setting::all()->pluck('value', 'key');
 
-        $isMember = false;
+        // Pricing Logic
+        $userType = 'non-member';
         if ($userId) {
             $user = User::find($userId);
-            $isMember = $user && $user->membership_status === 'member';
+            if ($user) {
+                $userType = $user->type->value;
+            }
         }
 
-        // Pricing Logic
-        $rate = $request->schedule_type === 'day'
-            ? $settings['fee_court_day']
-            : $settings['fee_court_night'];
+        $rate = 150; // Default Non-member rate
+
+        if ($userType === 'member') {
+            $rate = $request->schedule_type === 'day' ? 75 : 85;
+        } elseif ($userType === 'student') {
+            $rate = 45;
+        } elseif ($userType === 'non-member') {
+            $rate = 150;
+        }
 
         $trainerFee = $request->with_trainer ? $settings['fee_trainer'] : 0;
 
         $subtotal = ($rate * $request->games_count) + ($trainerFee * $request->games_count);
-        $discount = 0;
+        $discount = 0; // Discount logic removed
 
-        if ($isMember) {
-            $discountRate = $settings['discount_member_rate'];
-            $discount = $subtotal * $discountRate;
-        }
-
-        $total = $subtotal - $discount;
+        $total = $subtotal;
 
         // Generate unique payment reference
         $paymentReference = 'TC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));

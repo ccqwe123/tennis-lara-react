@@ -97,16 +97,31 @@ export default function BookingCreate({ auth, settings, users, isStaff }: PagePr
         : (isStaff ? null : auth.user)
 
     // Pricing
-    const courtRate = values.schedule_type === "day"
-        ? parseFloat(settings.fee_court_day || "0")
-        : parseFloat(settings.fee_court_night || "0")
+    const getCourtRate = () => {
+        const type = selectedUser?.type || (isGuest ? 'non-member' : 'non-member')
 
+        if (type === 'student') return 45
+        if (type === 'member') {
+            return values.schedule_type === "day" ? 75 : 85
+        }
+        return 150 // Non-member / Guest
+    }
+
+    // Helper to get rate for a specific slot based on user type
+    const getRateForSlot = (slot: 'day' | 'night') => {
+        const type = selectedUser?.type || (isGuest ? 'non-member' : 'non-member')
+
+        if (type === 'student') return 45
+        if (type === 'member') {
+            return slot === "day" ? 75 : 85
+        }
+        return 150 // Non-member / Guest
+    }
+
+    const courtRate = getCourtRate()
     const trainerFee = values.with_trainer ? parseFloat(settings.fee_trainer || "0") : 0
     const subtotal = (courtRate * values.games_count) + (trainerFee * values.games_count)
-
-    const discountRate = selectedUser?.membership_status === "member" ? parseFloat(settings.discount_member_rate || "0") : 0
-    const discount = subtotal * discountRate
-    const total = subtotal - discount
+    const total = subtotal
 
     const handleReviewBooking = async () => {
         const isValid = await form.trigger()
@@ -118,7 +133,8 @@ export default function BookingCreate({ auth, settings, users, isStaff }: PagePr
     function onConfirmBooking() {
         setIsSubmitting(true)
         const formValues = form.getValues()
-        router.post(route('bookings.store'), {
+        // Use hardcoded path to avoid missing 'route' type/function
+        router.post('/bookings', {
             ...formValues,
             user_id: formValues.is_guest ? null : formValues.user_id
         }, {
@@ -133,8 +149,7 @@ export default function BookingCreate({ auth, settings, users, isStaff }: PagePr
 
     return (
         <AuthenticatedLayout
-            user= { auth.user }
-    header = {< h2 className = "font-semibold text-xl text-gray-800 leading-tight" > Booking Details </h2>
+            header= {< h2 className = "font-semibold text-xl text-gray-800 leading-tight" > Booking Details </h2>
 }
         >
     <div className="py-8 bg-gray-50 min-h-screen" >
@@ -316,7 +331,7 @@ className = "grid grid-cols-2 gap-4"
             <Sun className={ cn("mb-3 h-8 w-8", field.value === 'day' ? "text-orange-500" : "text-gray-400") } />
                 < span className = "font-bold text-lg text-gray-900" > Day </span>
                     < span className = "text-sm text-gray-500 mt-1" > 6:00 AM - 6:00 PM </span>
-                        < span className = { cn("text-lg font-bold mt-2", field.value === 'day' ? "text-emerald-600" : "text-emerald-600") } >₱{ parseFloat(settings.fee_court_day).toFixed(2) } </span>
+                        < span className = { cn("text-lg font-bold mt-2", field.value === 'day' ? "text-emerald-600" : "text-emerald-600") } >₱{ getRateForSlot('day').toFixed(2) } </span>
                             </FormLabel>
                             </FormItem>
                             < FormItem >
@@ -327,7 +342,7 @@ className = "grid grid-cols-2 gap-4"
                                     <Moon className={ cn("mb-3 h-8 w-8", field.value === 'night' ? "text-indigo-500" : "text-gray-400") } />
                                         < span className = "font-bold text-lg text-gray-900" > Night </span>
                                             < span className = "text-sm text-gray-500 mt-1" > 6:00 PM - 10:00 PM </span>
-                                                < span className = { cn("text-lg font-bold mt-2", field.value === 'night' ? "text-emerald-600" : "text-emerald-600") } >₱{ parseFloat(settings.fee_court_night).toFixed(2) } </span>
+                                                < span className = { cn("text-lg font-bold mt-2", field.value === 'night' ? "text-emerald-600" : "text-emerald-600") } >₱{ getRateForSlot('night').toFixed(2) } </span>
                                                     </FormLabel>
                                                     </FormItem>
                                                     </RadioGroup>
@@ -441,14 +456,14 @@ className = "grid grid-cols-2 gap-4"
                 </div>
 
 {
-    selectedUser?.membership_status === 'member' && (
+    false && (
         <div className="flex justify-between items-center text-emerald-600" >
             <div className="flex items-center gap-2" >
                 <span className="text-lg" > Member Discount </span>
-                    < Badge className = "bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2 py-0.5 text-xs" > -{(discountRate * 100).toFixed(0)
+                    < Badge className = "bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2 py-0.5 text-xs" > -{(0 * 100).toFixed(0)
 }% </Badge>
     </div>
-    < span className = "text-lg font-medium" > -₱{ discount.toFixed(2) } </span>
+    < span className = "text-lg font-medium" > -₱{ (0).toFixed(2) } </span>
         </div>
                                         )}
 
@@ -559,10 +574,10 @@ className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold tex
                                 )
 }
 {
-    discount > 0 && (
+    false && (
         <div className="flex justify-between text-sm text-emerald-600" >
-            <span>Member Discount({(discountRate * 100).toFixed(0)}%)</span>
-                < span className = "font-medium" > -₱{ discount.toFixed(2) } </span>
+            <span>Member Discount({(0 * 100).toFixed(0)}%)</span>
+                < span className = "font-medium" > -₱{ (0).toFixed(2) } </span>
                     </div>
                                 )}
 <div className="flex justify-between pt-2 border-t border-gray-200" >
@@ -575,7 +590,7 @@ className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold tex
 
             < DialogFooter className = "gap-2 sm:gap-0" >
                 <Button
-                            type="button"
+type = "button"
 variant = "outline"
 onClick = {() => setShowConfirmDialog(false)}
 disabled = { isSubmitting }

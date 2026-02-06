@@ -22,6 +22,15 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/Components/ui/select"
+import {
+    Pagination,
+    PaginationContent,
+    PaginationEllipsis,
+    PaginationItem,
+    PaginationLink,
+    PaginationNext,
+    PaginationPrevious,
+} from "@/Components/ui/pagination"
 
 interface Tournament {
     id: number
@@ -305,25 +314,49 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
                                         {Math.min(tournaments.current_page * tournaments.per_page, tournaments.total)} of{" "}
                                         {tournaments.total} tournaments
                                     </p>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handlePageChange(tournaments.links[0]?.url)}
-                                            disabled={tournaments.current_page === 1}
-                                        >
-                                            <ChevronLeft className="h-4 w-4" />
-                                            Previous
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            onClick={() => handlePageChange(tournaments.links[tournaments.links.length - 1]?.url)}
-                                            disabled={tournaments.current_page === tournaments.last_page}
-                                        >
-                                            Next
-                                            <ChevronRight className="h-4 w-4" />
-                                        </Button>
+                                    <div>
+                                        <Pagination className="w-auto mx-0">
+                                            <PaginationContent>
+                                                <PaginationItem>
+                                                    <PaginationPrevious
+                                                        href={tournaments.links[0].url || '#'}
+                                                        isActive={!tournaments.links[0].url}
+                                                        className={!tournaments.links[0].url ? 'pointer-events-none opacity-50' : ''}
+                                                        preserveState
+                                                    />
+                                                </PaginationItem>
+
+                                                {tournaments.links.slice(1, -1).map((link, i) => {
+                                                    if (link.label === '...') {
+                                                        return (
+                                                            <PaginationItem key={i}>
+                                                                <PaginationEllipsis />
+                                                            </PaginationItem>
+                                                        )
+                                                    }
+                                                    return (
+                                                        <PaginationItem key={i}>
+                                                            <PaginationLink
+                                                                href={link.url || '#'}
+                                                                isActive={link.active}
+                                                                preserveState
+                                                            >
+                                                                <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                                                            </PaginationLink>
+                                                        </PaginationItem>
+                                                    )
+                                                })}
+
+                                                <PaginationItem>
+                                                    <PaginationNext
+                                                        href={tournaments.links[tournaments.links.length - 1].url || '#'}
+                                                        isActive={!tournaments.links[tournaments.links.length - 1].url}
+                                                        className={!tournaments.links[tournaments.links.length - 1].url ? 'pointer-events-none opacity-50' : ''}
+                                                        preserveState
+                                                    />
+                                                </PaginationItem>
+                                            </PaginationContent>
+                                        </Pagination>
                                     </div>
                                 </div>
                             )}

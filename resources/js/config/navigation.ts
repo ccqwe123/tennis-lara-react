@@ -29,16 +29,16 @@ export const navMain: NavItem[] = [
         title: "Dashboard",
         url: "/dashboard",
         icon: LayoutDashboard,
-        roles: ['admin', 'staff', 'member', 'non-member'],
+        roles: ['admin', 'staff', 'member', 'non-member', 'student'],
     },
     {
         title: "Bookings",
         url: "/bookings",
         icon: Calendar,
-        roles: ['admin', 'staff', 'member', 'non-member'],
+        roles: ['admin', 'staff', 'member', 'non-member', 'student'],
         items: [
-            { title: "My Bookings", url: "/my-bookings", roles: ['member', 'non-member'] },
-            { title: "Book Court", url: "/bookings/create", roles: ['admin', 'staff', 'member', 'non-member'] },
+            { title: "My Bookings", url: "/my-bookings", roles: ['member', 'non-member', 'student'] },
+            { title: "Book Court", url: "/bookings/create", roles: ['admin', 'staff', 'member', 'non-member', 'student'] },
             { title: "All Bookings", url: "/bookings", roles: ['admin', 'staff'] },
         ],
     },
@@ -48,7 +48,7 @@ export const navMain: NavItem[] = [
         icon: Trophy,
         roles: ['admin', 'staff'],
         items: [
-            { title: "View Tournaments", url: "/tournaments", roles: ['admin', 'staff', 'member', 'non-member'] },
+            { title: "View Tournaments", url: "/tournaments", roles: ['admin', 'staff', 'member', 'non-member', 'student'] },
             { title: "Manage", url: "/tournaments/manage", roles: ['admin'] },
         ],
     },
@@ -56,15 +56,15 @@ export const navMain: NavItem[] = [
         title: "Tournaments",
         url: "/tournaments",
         icon: Trophy,
-        roles: ['member', 'non-member'],
+        roles: ['member', 'non-member', 'student'],
     },
     {
         title: "Membership",
         url: "/memberships",
         icon: UserCheck,
-        roles: ['admin', 'staff', 'member', 'non-member'],
+        roles: ['admin', 'staff', 'member', 'non-member', 'student'],
         items: [
-            { title: "My Membership", url: "/memberships", roles: ['member', 'non-member'] },
+            { title: "My Membership", url: "/memberships", roles: ['member', 'non-member', 'student'] },
             { title: "Manage Members", url: "/manage-memberships", roles: ['admin', 'staff'] },
             { title: "Add Membership", url: "/memberships/create", roles: ['admin', 'staff'] },
         ],
@@ -115,18 +115,18 @@ export const navMain: NavItem[] = [
 
 // Quick access projects/actions
 export const navProjects: NavProject[] = [
-    {
-        name: "Quick Booking",
-        url: "/bookings/create",
-        icon: Calendar,
-        roles: ['admin', 'staff', 'member'],
-    },
-    {
-        name: "View Receipts",
-        url: "/receipts",
-        icon: Receipt,
-        roles: ['admin', 'staff', 'member', 'non-member'],
-    },
+    // {
+    //     name: "Quick Booking",
+    //     url: "/bookings/create",
+    //     icon: Calendar,
+    //     roles: ['admin', 'staff', 'member'],
+    // },
+    // {
+    //     name: "View Receipts",
+    //     url: "/receipts",
+    //     icon: Receipt,
+    //     roles: ['admin', 'staff', 'member', 'non-member'],
+    // },
 ]
 
 /**

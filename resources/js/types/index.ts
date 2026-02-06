@@ -1,4 +1,4 @@
-export type UserType = 'admin' | 'staff' | 'member' | 'non-member';
+export type UserType = 'admin' | 'staff' | 'member' | 'non-member' | 'student';
 
 export interface User {
     id: number;
