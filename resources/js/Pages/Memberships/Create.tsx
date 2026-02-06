@@ -4,7 +4,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { Head, useForm } from "@inertiajs/react"
 import { Check, Crown, ChevronsUpDown, User as UserIcon, ArrowLeft } from "lucide-react"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@/Components/ui/button"
 import {
     Card,
     CardContent,
@@ -20,10 +20,10 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from "@/components/ui/dialog"
+} from "@/Components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/Components/ui/radio-group"
-import { Label } from "@/components/ui/label"
-import { Badge } from "@/components/ui/badge"
+import { Label } from "@/Components/ui/label"
+import { Badge } from "@/Components/ui/badge"
 import {
     Command,
     CommandEmpty,
@@ -31,12 +31,12 @@ import {
     CommandInput,
     CommandItem,
     CommandList,
-} from "@/components/ui/command"
+} from "@/Components/ui/command"
 import {
     Popover,
     PopoverContent,
     PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@/Components/ui/popover"
 import { cn } from "@/lib/utils"
 import { Link } from "@inertiajs/react"
 
