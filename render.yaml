@@ -5,6 +5,8 @@ services:
     plan: free
     region: singapore   # change if you want (oregon, frankfurt, etc.)
     envVars:
+      - key: APP_KEY
+        value: base64:3gJRa9EGsZDjSSYre0rZOgVH8A16PIEetaluNHHtY1s=
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
