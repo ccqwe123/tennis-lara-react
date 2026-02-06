@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: laravel-breeze-app
+    env: docker
+    plan: free
+    region: singapore   # change if you want (oregon, frankfurt, etc.)
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      - key: APP_URL
+        value: https://tennis-lara-react.onrender.com
+      - key: ASSET_URL
+        value: https://tennis-lara-react.onrender.com
+      - key: VITE_APP_URL
+        value: https://tennis-lara-react.onrender.com
+      - key: APP_KEY
+        sync: false
+
+      # ---- MYSQL DATABASE (RENDER FREE) ----
+      - key: DB_CONNECTION
+        value: mysql
+      - key: DB_HOST
+        fromDatabase:
+          name: laravel-mysql
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: laravel-mysql
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: laravel-mysql
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: laravel-mysql
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: laravel-mysql
+          property: password
+
+databases:
+  - name: laravel-mysql
+    plan: free
