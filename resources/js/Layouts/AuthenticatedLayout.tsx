@@ -1,7 +1,7 @@
 import { ReactNode } from "react"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar"
 import { AppSidebar } from "@/Components/ui/app-sidebar"
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/Components/ui/separator"
 import { TooltipProvider } from "@/Components/ui/tooltip"
 import {
     Breadcrumb,
