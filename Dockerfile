@@ -39,13 +39,15 @@ COPY . .
 # Copy built frontend from previous stage
 COPY --from=build /app/public/build ./public/build
 
-# Install PHP dependencies
-RUN composer install --no-dev --optimize-autoloader
+# Create a basic .env so composer scripts don't crash
+RUN cp .env.example .env
+
+# Install PHP dependencies WITHOUT running Laravel scripts
+RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Fix permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Expose port
 EXPOSE 9000
 
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=9000"]
