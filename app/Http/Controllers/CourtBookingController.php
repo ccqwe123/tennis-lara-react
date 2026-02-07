@@ -181,6 +181,9 @@ class CourtBookingController extends Controller
     {
         $isStaff = auth()->user()->isStaff();
 
+        // Force booking_date to Manila time (Timezone: Asia/Manila)
+        $request->merge(['booking_date' => now('Asia/Manila')->toDateString()]);
+
         $request->validate([
             'user_id' => $isStaff ? 'nullable|exists:users,id' : 'nullable',
             'schedule_type' => 'required|in:day,night',
@@ -188,6 +191,9 @@ class CourtBookingController extends Controller
             'games_count' => 'required|integer|min:1|max:4',
             'payment_method' => 'required|in:cash,gcash',
             'with_trainer' => 'boolean',
+            'picker_selection' => 'nullable|array',
+            'category' => 'required|in:single,double',
+            'priest_count' => 'nullable|integer|min:0',
         ]);
 
         // Determine effective user ID
@@ -216,7 +222,27 @@ class CourtBookingController extends Controller
 
         $trainerFee = $request->with_trainer ? $settings['fee_trainer'] : 0;
 
-        $subtotal = ($rate * $request->games_count) + ($trainerFee * $request->games_count);
+        $basePickerFee = $settings['fee_picker'] ?? 80;
+        $categoryDivisor = $request->category === 'double' ? 4 : 2;
+        $priestCount = $request->priest_count ?? 0;
+
+        // Enforce max priest count logic
+        $maxPriest = $request->category === 'double' ? 3 : 1;
+        if ($priestCount > $maxPriest) {
+            $priestCount = $maxPriest;
+        }
+
+        $pickerDivisor = max(1, $categoryDivisor - $priestCount);
+        $pickerFeePerGame = $basePickerFee / $pickerDivisor;
+
+        $pickersCount = 0;
+        if ($request->has('picker_selection') && is_array($request->picker_selection)) {
+            // Count how many games have pickers selected
+            $pickersCount = count(array_filter($request->picker_selection));
+        }
+        $totalPickerFee = $pickersCount * $pickerFeePerGame;
+
+        $subtotal = ($rate * $request->games_count) + ($trainerFee * $request->games_count) + $totalPickerFee;
         $discount = 0; // Discount logic removed
 
         $total = $subtotal;
@@ -234,6 +260,9 @@ class CourtBookingController extends Controller
             'booking_date' => $request->booking_date,
             'games_count' => $request->games_count,
             'with_trainer' => $request->with_trainer ?? false,
+            'picker_selection' => json_encode($request->picker_selection), // Store selection
+            'category' => $request->category,
+            'priest_count' => $priestCount,
             'payment_method' => $request->payment_method,
             'payment_reference' => $paymentReference,
             'payment_status' => $paymentStatus,

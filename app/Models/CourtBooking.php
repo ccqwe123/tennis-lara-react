@@ -18,6 +18,8 @@ class CourtBooking extends Model
         'payment_reference',
         'payment_status',
         'total_amount',
+        'picker_selection',
+        'priest_count',
         'discount_applied'
     ];
 

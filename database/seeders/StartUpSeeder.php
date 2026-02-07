@@ -23,6 +23,7 @@ class StartUpSeeder extends Seeder
             ['key' => 'fee_trainer', 'value' => '200', 'description' => 'Trainer Fee (Per Game)'],
             ['key' => 'fee_tournament_base', 'value' => '500', 'description' => 'Base Tournament Fee'],
             ['key' => 'discount_member_rate', 'value' => '0.10', 'description' => 'Member Discount Rate (Decimal)'],
+            ['key' => 'fee_picker', 'value' => '80', 'description' => 'Picker/Ball Boy Fee (Per Game)'],
         ];
 
         foreach ($settings as $setting) {

@@ -3,13 +3,14 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, Check, ChevronsUpDown, Moon, Sun, Banknote, CreditCard } from "lucide-react"
+import { Calendar as CalendarIcon, Check, CreditCard, Banknote, Moon, Sun, ChevronsUpDown, User, Users } from "lucide-react"
 import { router } from "@inertiajs/react"
 import { toast } from "sonner"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { cn } from "@/lib/utils"
 import { Button } from "@/Components/ui/button"
+import { Input } from "@/Components/ui/input"
 import { Calendar } from "@/Components/ui/calendar"
 import {
     Form,
@@ -41,6 +42,7 @@ import {
     DialogTitle,
 } from "@/Components/ui/dialog"
 import { Switch } from "@/Components/ui/switch"
+import { Checkbox } from "@/Components/ui/checkbox"
 import { RadioGroup, RadioGroupItem } from "@/Components/ui/radio-group"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import { Label } from "@/Components/ui/label"
@@ -68,6 +70,9 @@ const formSchema = z.object({
     with_trainer: z.boolean().default(false),
     payment_method: z.enum(["cash", "gcash"]),
     is_guest: z.boolean().optional(),
+    picker_selection: z.array(z.boolean()).optional(),
+    category: z.enum(["single", "double"]),
+    priest_count: z.number().min(0).default(0),
 })
 
 export default function BookingCreate({ auth, settings, users, isStaff }: PageProps) {
@@ -85,6 +90,9 @@ export default function BookingCreate({ auth, settings, users, isStaff }: PagePr
             payment_method: "cash",
             booking_date: new Date(),
             is_guest: false,
+            picker_selection: [false, false, false, false],
+            category: "single",
+            priest_count: 0,
         },
     })
 
@@ -120,7 +128,17 @@ export default function BookingCreate({ auth, settings, users, isStaff }: PagePr
 
     const courtRate = getCourtRate()
     const trainerFee = values.with_trainer ? parseFloat(settings.fee_trainer || "0") : 0
-    const subtotal = (courtRate * values.games_count) + (trainerFee * values.games_count)
+    const basePickerFee = parseFloat(settings.fee_picker || "80")
+    const categoryDivisor = values.category === 'double' ? 4 : 2
+    const priestCount = values.priest_count || 0
+    const pickerDivisor = Math.max(1, categoryDivisor - priestCount)
+    const pickerFee = basePickerFee / pickerDivisor
+
+    // Calculate total picker fee based on selection and game count
+    const activePickerCount = (values.picker_selection || []).slice(0, values.games_count).filter(Boolean).length
+    const totalPickerFee = activePickerCount * pickerFee
+
+    const subtotal = (courtRate * values.games_count) + (trainerFee * values.games_count) + totalPickerFee
     const total = subtotal
 
     const handleReviewBooking = async () => {
@@ -264,62 +282,16 @@ export default function BookingCreate({ auth, settings, users, isStaff }: PagePr
 </div>
                                     )}
 
-{/* 1. Date */ }
-<FormField
-                                        control={ form.control }
-name = "booking_date"
-render = {({ field }) => (
-    <FormItem className= "flex flex-col" >
-    <FormLabel className="text-base font-semibold" > Select Date </FormLabel>
-        < Popover >
-        <PopoverTrigger asChild >
-        <FormControl>
-        <Button
-                                                                variant={ "outline" }
-className = {
-    cn(
-                                                                    "w-full pl-3 text-left font-normal h-12 text-base shadow-sm border-gray-200",
-                                                                    !field.value && "text-muted-foreground"
-                                                                )
-}
-    >
-    {
-        field.value ? (
-            format(field.value, "MM/dd/yyyy")
-        ) : (
-            <span>Pick a date</ span >
-                                                                )}
-<CalendarIcon className="ml-auto h-5 w-5 text-gray-400" />
-    </Button>
-    </FormControl>
-    </PopoverTrigger>
-    < PopoverContent className = "w-auto p-0" align = "start" >
-        <Calendar
-                                                            mode="single"
-selected = { field.value }
-onSelect = { field.onChange }
-disabled = {(date) =>
-date < new Date() || date < new Date("1900-01-01")
-                                                            }
-initialFocus
-    />
-    </PopoverContent>
-    </Popover>
-    < FormMessage />
-    </FormItem>
-                                        )}
-                                    />
-
 {/* 2. Time Slot */ }
 <FormField
-                                        control={ form.control }
+    control={ form.control }
 name = "schedule_type"
 render = {({ field }) => (
     <FormItem>
     <FormLabel className= "text-base font-semibold" > Time Slot </FormLabel>
         < FormControl >
         <RadioGroup
-                                                        onValueChange={ field.onChange }
+                    onValueChange={ field.onChange }
 defaultValue = { field.value }
 className = "grid grid-cols-2 gap-4"
     >
@@ -327,35 +299,135 @@ className = "grid grid-cols-2 gap-4"
     <FormControl>
     <RadioGroupItem value="day" className = "peer sr-only" />
         </FormControl>
-        < FormLabel className = "flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-6 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-40 justify-center" >
-            <Sun className={ cn("mb-3 h-8 w-8", field.value === 'day' ? "text-orange-500" : "text-gray-400") } />
-                < span className = "font-bold text-lg text-gray-900" > Day </span>
-                    < span className = "text-sm text-gray-500 mt-1" > 6:00 AM - 6:00 PM </span>
-                        < span className = { cn("text-lg font-bold mt-2", field.value === 'day' ? "text-emerald-600" : "text-emerald-600") } >₱{ getRateForSlot('day').toFixed(2) } </span>
+        < FormLabel className = "gap-0 flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-0 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-32 justify-center" >
+            <Sun className={ cn("mb-2 h-6 w-6", field.value === 'day' ? "text-orange-500" : "text-gray-400") } />
+                < span className = "font-bold text-base text-gray-900" > Day </span>
+                    < span className = "text-xs text-gray-500 mt-1" > 6:00 AM - 6:00 PM </span>
+                        < span className = { cn("text-base font-bold mt-1", field.value === 'day' ? "text-emerald-600" : "text-emerald-600") } >₱{ getRateForSlot('day').toFixed(2) } </span>
                             </FormLabel>
                             </FormItem>
                             < FormItem >
                             <FormControl>
                             <RadioGroupItem value="night" className = "peer sr-only" />
                                 </FormControl>
-                                < FormLabel className = "flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-6 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-40 justify-center" >
-                                    <Moon className={ cn("mb-3 h-8 w-8", field.value === 'night' ? "text-indigo-500" : "text-gray-400") } />
-                                        < span className = "font-bold text-lg text-gray-900" > Night </span>
-                                            < span className = "text-sm text-gray-500 mt-1" > 6:00 PM - 10:00 PM </span>
-                                                < span className = { cn("text-lg font-bold mt-2", field.value === 'night' ? "text-emerald-600" : "text-emerald-600") } >₱{ getRateForSlot('night').toFixed(2) } </span>
+                                < FormLabel className = "gap-0 flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-0 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-32 justify-center" >
+                                    <Moon className={ cn("mb-2 h-6 w-6", field.value === 'night' ? "text-indigo-500" : "text-gray-400") } />
+                                        < span className = "font-bold text-base text-gray-900" > Night </span>
+                                            < span className = "text-xs text-gray-500 mt-1" > 6:00 PM - 10:00 PM </span>
+                                                < span className = { cn("text-base font-bold mt-1", field.value === 'night' ? "text-emerald-600" : "text-emerald-600") } >₱{ getRateForSlot('night').toFixed(2) } </span>
                                                     </FormLabel>
                                                     </FormItem>
                                                     </RadioGroup>
                                                     </FormControl>
                                                     < FormMessage />
                                                     </FormItem>
-                                        )}
-                                    />
+    )}
+/>
+
+{/* Category Selection */ }
+<FormField
+    control={ form.control }
+name = "category"
+render = {({ field }) => (
+    <FormItem className= "space-y-3" >
+    <FormLabel className="text-base font-semibold" > Category </FormLabel>
+        < FormControl >
+        <RadioGroup
+                    onValueChange={
+    (val) => {
+        field.onChange(val)
+        form.setValue('priest_count', 0)
+    }
+}
+defaultValue = { field.value }
+className = "grid grid-cols-2 gap-4"
+    >
+    <FormItem>
+    <FormControl>
+    <RadioGroupItem value="single" className = "peer sr-only" />
+        </FormControl>
+        < FormLabel className = "gap-0 flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-0 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-28 justify-center" >
+            <User className={ cn("mb-2 h-6 w-6", field.value === 'single' ? "text-emerald-600" : "text-gray-400") } />
+                < span className = "font-bold text-base text-gray-900" > Single </span>
+                    < span className = "text-xs text-gray-500 mt-1 text-center" > Picker split by 2 </span>
+                        </FormLabel>
+                        </FormItem>
+                        < FormItem >
+                        <FormControl>
+                        <RadioGroupItem value="double" className = "peer sr-only" />
+                            </FormControl>
+                            < FormLabel className = "gap-0 flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-0 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-28 justify-center" >
+                                <Users className={ cn("mb-2 h-6 w-6", field.value === 'double' ? "text-emerald-600" : "text-gray-400") } />
+                                    < span className = "font-bold text-base text-gray-900" > Double </span>
+                                        < span className = "text-xs text-gray-500 mt-1 text-center" > Picker split by 4 </span>
+                                            </FormLabel>
+                                            </FormItem>
+                                            </RadioGroup>
+                                            </FormControl>
+                                            < FormMessage />
+                                            </FormItem>
+    )}
+/>
+
+{/* Priest Option */ }
+<FormField
+    control={ form.control }
+name = "priest_count"
+render = {({ field }) => {
+    const category = form.watch('category');
+    const maxPriest = category === 'double' ? 3 : 1;
+
+    return (
+        <FormItem className= "space-y-4 rounded-xl border border-gray-200 bg-white p-4 shadow-sm" >
+        <div className="flex flex-row items-center justify-between" >
+            <div className="space-y-0.5" >
+                <FormLabel className="text-base font-semibold" > With Priest </FormLabel>
+                    < div className = "text-sm text-muted-foreground" >
+                        Are you playing with a priest ?
+                            </div>
+                            </div>
+                            < FormControl >
+                            <Switch
+                            checked={ field.value > 0 }
+    onCheckedChange = {(checked) => {
+        field.onChange(checked ? 1 : 0);
+    }
+}
+                        />
+    </FormControl>
+    </div>
+{
+    field.value > 0 && (
+        <div className="flex items-center gap-4 pt-2 border-t" >
+            <FormLabel className="whitespace-nowrap" > Priest Quantity(Max: { maxPriest }) </FormLabel>
+                < FormControl >
+                <Input
+                                type="number"
+    min = { 1}
+    max = { maxPriest }
+    value = { field.value }
+    onChange = {(e) => {
+        let val = parseInt(e.target.value);
+        if (isNaN(val)) val = 1;
+        if (val > maxPriest) val = maxPriest;
+        if (val < 1) val = 1;
+        field.onChange(val);
+    }
+}
+className = "w-24"
+    />
+    </FormControl>
+    < FormMessage />
+    </div>
+                )}
+</FormItem>
+        );
+    }}
+/>
 
 {/* 3. Number of Games */ }
-<div className="space-y-4" >
-    <FormField
-                                            control={ form.control }
+<FormField
+    control={ form.control }
 name = "games_count"
 render = {({ field }) => (
     <FormItem className= "space-y-3" >
@@ -365,16 +437,16 @@ render = {({ field }) => (
         {
             [1, 2, 3, 4].map((count) => (
                 <Button
-                                                                    key= { count }
-                                                                    type = "button"
-                                                                    variant = "ghost"
-                                                                    className = {
+                    key= { count }
+                    type = "button"
+                    variant = "ghost"
+                    className = {
                     cn(
-                                                                        "flex-1 h-14 text-xl font-bold rounded-xl border border-gray-200 shadow-sm hover:bg-emerald-50 hover:text-emerald-600",
+                        "flex-1 h-14 text-xl font-bold rounded-xl border border-gray-200 shadow-sm hover:bg-emerald-50 hover:text-emerald-600",
                         field.value === count
                             ? "bg-emerald-500 text-white hover:bg-emerald-600 hover:text-white border-transparent shadow-md"
                             : "bg-white text-gray-900"
-                                                                    )
+                    )
         }
 onClick = {() => field.onChange(count)}
                                                                 >
@@ -383,6 +455,33 @@ onClick = {() => field.onChange(count)}
                                                             ))}
 </div>
     </FormControl>
+
+{/* Picker Selection per Game */ }
+<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2" >
+{
+    Array.from({ length: field.value }).map((_, index) => (
+        <FormField
+            key= { index }
+            control = { form.control }
+            name = {`picker_selection.${index}`}
+render = {({ field: pickerField }) => (
+    <FormItem className= "flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4" >
+    <FormControl>
+    <Checkbox
+                            checked={ pickerField.value }
+onCheckedChange = { pickerField.onChange }
+    />
+    </FormControl>
+    < div className = "space-y-1 leading-none" >
+        <FormLabel>
+        Game { index + 1 }: With Picker(+₱{ pickerFee.toFixed(2) })
+            </FormLabel>
+            </div>
+            </FormItem>
+            )}
+        />
+    ))}
+</div>
     < FormMessage />
     </FormItem>
                                             )}
@@ -406,7 +505,7 @@ onCheckedChange = { field.onChange }
         </FormItem>
                                             )}
                                         />
-    </div>
+
 
 {/* 4. Payment Method */ }
 <FormField
@@ -541,11 +640,15 @@ className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold tex
         < p className = "font-medium text-gray-900" > { values.games_count } { values.games_count === 1 ? "game" : "games" } </p>
             </div>
             < div >
-            <span className="text-gray-500" > With Trainer </span>
-                < p className = "font-medium text-gray-900" > { values.with_trainer ? "Yes" : "No" } </p>
+            <span className="text-gray-500" > Category </span>
+                < p className = "font-medium text-gray-900 capitalize" > { values.category } </p>
                     </div>
-                    </div>
-                    </div>
+                    < div >
+                    <span className="text-gray-500" > With Trainer </span>
+                        < p className = "font-medium text-gray-900" > { values.with_trainer ? "Yes" : "No" } </p>
+                            </div>
+                            </div>
+                            </div>
 
 {/* Payment Info */ }
 <div className="bg-slate-50 rounded-lg p-4 space-y-3" >
@@ -574,12 +677,13 @@ className = "w-full bg-emerald-500 hover:bg-emerald-600 text-white font-bold tex
                                 )
 }
 {
-    false && (
-        <div className="flex justify-between text-sm text-emerald-600" >
-            <span>Member Discount({(0 * 100).toFixed(0)}%)</span>
-                < span className = "font-medium" > -₱{ (0).toFixed(2) } </span>
+    activePickerCount > 0 && (
+        <div className="flex justify-between text-sm" >
+            <span className="text-gray-500" > Picker({ activePickerCount } games × ₱{ pickerFee.toFixed(2) }) </span>
+                < span className = "font-medium" >₱{ totalPickerFee.toFixed(2) } </span>
                     </div>
-                                )}
+    )
+}
 <div className="flex justify-between pt-2 border-t border-gray-200" >
     <span className="text-lg font-bold text-gray-900" > Total </span>
         < span className = "text-lg font-bold text-emerald-600" >₱{ total.toFixed(2) } </span>
