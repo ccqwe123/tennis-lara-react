@@ -1,12 +1,16 @@
 import { useState } from "react"
 import { router } from "@inertiajs/react"
-import { Search, Filter, Calendar, DollarSign, ChevronLeft, ChevronRight, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
+import { Search, Filter, Calendar, DollarSign, Plus, ChevronRight, CalendarIcon, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react"
 import { format } from "date-fns"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
+
+declare var route: any;
+
 import { Input } from "@/Components/ui/input"
 import { Button } from "@/Components/ui/button"
 import { Badge } from "@/Components/ui/badge"
+import { StatusBadge } from "@/Components/StatusBadge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import {
     Table,
@@ -169,9 +173,10 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                 </div>
                                 <Button
                                     onClick={() => router.visit(route("bookings.create"))}
-                                    className="bg-emerald-500 hover:bg-emerald-600"
+                                    className="bg-emerald-500 hover:bg-emerald-600 p-5"
                                 >
-                                    + New Booking
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    New Booking
                                 </Button>
                             </div>
                         </CardHeader>
@@ -225,7 +230,7 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
 
                                 {/* Status Filter */}
                                 <Select value={status} onValueChange={handleStatusChange}>
-                                    <SelectTrigger className="w-full sm:w-[180px] h-11">
+                                    <SelectTrigger className="w-full sm:w-[180px] h-11 p-5">
                                         <Filter className="h-4 w-4 mr-2" />
                                         <SelectValue placeholder="Filter by status" />
                                     </SelectTrigger>
@@ -303,12 +308,7 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge
-                                                            variant={booking.membership_status === "member" ? "default" : "secondary"}
-                                                            className={booking.membership_status === "member" ? "bg-emerald-500" : booking.membership_status === "guest" ? "bg-gray-400 text-white" : ""}
-                                                        >
-                                                            {booking.membership_status.charAt(0).toUpperCase() + booking.membership_status.slice(1)}
-                                                        </Badge>
+                                                        <StatusBadge type="user_type" value={booking.membership_status} />
                                                     </TableCell>
                                                     <TableCell className="text-gray-700">{booking.booking_date}</TableCell>
                                                     <TableCell>
@@ -323,15 +323,10 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>
-                                                        <span className="capitalize text-gray-700 font-medium">{booking.payment_method}</span>
+                                                        <StatusBadge type="payment_method" value={booking.payment_method} />
                                                     </TableCell>
                                                     <TableCell>
-                                                        <Badge
-                                                            variant={booking.payment_status === "paid" ? "default" : "secondary"}
-                                                            className={booking.payment_status === "paid" ? "bg-green-500" : ""}
-                                                        >
-                                                            {booking.payment_status}
-                                                        </Badge>
+                                                        <StatusBadge type="payment_status" value={booking.payment_status} />
                                                     </TableCell>
                                                     <TableCell className="text-right">
                                                         <span className="font-bold text-emerald-600">₱{parseFloat(booking.total_amount).toFixed(2)}</span>

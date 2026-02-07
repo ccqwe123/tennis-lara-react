@@ -28,6 +28,7 @@ class CourtBooking extends Model
         'with_trainer' => 'boolean',
         'total_amount' => 'decimal:2',
         'discount_applied' => 'decimal:2',
+        'picker_selection' => 'array',
     ];
 
     public function user()

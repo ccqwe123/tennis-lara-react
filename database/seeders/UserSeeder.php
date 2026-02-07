@@ -18,7 +18,7 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'admin@tennis.com'],
             [
-                'name' => 'Admin User',
+                'name' => 'Henry Malibat',
                 'password' => Hash::make('password'),
                 'type' => UserType::ADMIN,
                 'email_verified_at' => now(),
@@ -29,7 +29,7 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'staff@tennis.com'],
             [
-                'name' => 'Staff User',
+                'name' => 'Kristine Moran',
                 'password' => Hash::make('password'),
                 'type' => UserType::STAFF,
                 'email_verified_at' => now(),
@@ -40,7 +40,7 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'member@tennis.com'],
             [
-                'name' => 'Member User',
+                'name' => 'Albert Guibara',
                 'password' => Hash::make('password'),
                 'type' => UserType::MEMBER,
                 'email_verified_at' => now(),
@@ -51,9 +51,19 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['email' => 'nonmember@tennis.com'],
             [
-                'name' => 'Non-Member User',
+                'name' => 'Joanne Lim',
                 'password' => Hash::make('password'),
                 'type' => UserType::NON_MEMBER,
+                'email_verified_at' => now(),
+            ]
+        );
+
+        User::updateOrCreate(
+            ['email' => 'student@tennis.com'],
+            [
+                'name' => 'Romeo Cutaran',
+                'password' => Hash::make('password'),
+                'type' => UserType::STUDENT,
                 'email_verified_at' => now(),
             ]
         );

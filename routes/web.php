@@ -54,8 +54,21 @@ Route::put('/memberships/{user}', [App\Http\Controllers\MemberSubscriptionContro
 Route::post('/memberships', [App\Http\Controllers\MemberSubscriptionController::class, 'store'])->name('memberships.store');
 Route::get('/api/users/search', [App\Http\Controllers\MemberSubscriptionController::class, 'search'])->name('api.users.search');
 
+// Payment Verification
+Route::get('/payments/verify', [App\Http\Controllers\PaymentVerificationController::class, 'index'])->name('payments.verify');
+Route::post('/payments/verify/booking/{booking}/pay', [App\Http\Controllers\PaymentVerificationController::class, 'markBookingPaid'])->name('payments.verify.booking.pay');
+Route::post('/payments/verify/tournament/{registration}/pay', [App\Http\Controllers\PaymentVerificationController::class, 'markTournamentRegistrationPaid'])->name('payments.verify.tournament.pay');
+
+// Users
+Route::put('/users/{user}/password', [App\Http\Controllers\UserController::class, 'changePassword'])->name('users.password.update');
+Route::resource('users', App\Http\Controllers\UserController::class);
+
+// Expenses
+Route::resource('expenses', App\Http\Controllers\ExpenseController::class)->only(['index', 'store', 'update', 'destroy']);
+
 // Admin Settings
 Route::get('/settings', [App\Http\Controllers\SettingController::class, 'index'])->name('settings.index');
+Route::get('/settings/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->name('activity-logs.index');
 Route::post('/settings', [App\Http\Controllers\SettingController::class, 'update'])->name('settings.update');
 Route::post('/settings/qr-code', [App\Http\Controllers\SettingController::class, 'uploadQrCode'])->name('settings.qr-code.upload');
 Route::delete('/settings/qr-code', [App\Http\Controllers\SettingController::class, 'deleteQrCode'])->name('settings.qr-code.delete');
@@ -63,5 +76,9 @@ Route::delete('/settings/qr-code', [App\Http\Controllers\SettingController::clas
 // Reports
 Route::get('/reports/bookings', [App\Http\Controllers\ReportsController::class, 'bookingReport'])->name('reports.bookings');
 Route::get('/reports/bookings/export', [App\Http\Controllers\ReportsController::class, 'exportBookingReport'])->name('reports.bookings.export');
+Route::get('/reports/members', [App\Http\Controllers\ReportsController::class, 'memberReport'])->name('reports.members');
+Route::get('/reports/members/export', [App\Http\Controllers\ReportsController::class, 'exportMemberReport'])->name('reports.members.export');
+Route::get('/reports/revenue', [App\Http\Controllers\ReportsController::class, 'revenueReport'])->name('reports.revenue');
+Route::get('/reports/revenue/export', [App\Http\Controllers\ReportsController::class, 'exportRevenueReport'])->name('reports.revenue.export');
 
 require __DIR__ . '/auth.php';

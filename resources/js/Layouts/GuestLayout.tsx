@@ -22,7 +22,7 @@ export default function GuestLayout({ children }: GuestLayoutProps) {
 
             {/* Footer */}
             <p className="relative z-10 mt-8 text-center text-sm text-slate-400">
-                © {new Date().getFullYear()} Tennis Club. All rights reserved.
+                © {new Date().getFullYear()} Tuguegarao Tennis Club. All rights reserved.
             </p>
         </div>
     )

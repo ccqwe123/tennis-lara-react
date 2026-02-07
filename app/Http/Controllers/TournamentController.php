@@ -95,7 +95,7 @@ class TournamentController extends Controller
             'payment_method' => 'required|in:cash,gcash',
         ]);
 
-        TournamentRegistration::create([
+        $registration = TournamentRegistration::create([
             'tournament_id' => $tournament->id,
             'user_id' => auth()->id(),
             'payment_method' => $request->payment_method,
@@ -103,6 +103,8 @@ class TournamentController extends Controller
             'payment_status' => 'unpaid',
             'amount_paid' => $tournament->registration_fee,
         ]);
+
+        \App\Services\ActivityLogger::log('tournament_join', "User joined tournament: {$tournament->name}", $registration);
 
         return back()->with('success', 'Registered successfully!');
     }
@@ -133,7 +135,9 @@ class TournamentController extends Controller
             'status' => 'required|in:open,ongoing,completed',
         ]);
 
-        Tournament::create($validated);
+        $tournament = Tournament::create($validated);
+
+        \App\Services\ActivityLogger::log('tournament_create', "Admin created tournament: {$tournament->name}", $tournament);
 
         return redirect()->route('tournaments.manage')->with('success', 'Tournament created successfully!');
     }
@@ -175,6 +179,8 @@ class TournamentController extends Controller
         ]);
 
         $tournament->update($validated);
+
+        \App\Services\ActivityLogger::log('tournament_update', "Admin updated tournament: {$tournament->name}", $tournament);
 
         return redirect()->route('tournaments.manage')->with('success', 'Tournament updated successfully!');
     }
@@ -232,7 +238,10 @@ class TournamentController extends Controller
             abort(404);
         }
 
+        $userName = $registration->user->name;
         $registration->delete();
+
+        \App\Services\ActivityLogger::log('tournament_participant_remove', "Admin removed participant {$userName} from tournament {$tournament->name}");
 
         return back()->with('success', 'Participant removed successfully!');
     }

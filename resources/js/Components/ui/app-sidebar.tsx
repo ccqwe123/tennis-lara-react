@@ -31,17 +31,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const filteredNavMain = React.useMemo(() => {
         const filtered = filterNavMainByRole(navMain, userType)
         return filtered.map(item => {
-            const isChildActive = item.items?.some(sub => url.startsWith(sub.url))
-            const isActive = item.items?.length
-                ? isChildActive
-                : url.startsWith(item.url)
+            // Check if any child is active (strict match)
+            const isChildActive = item.items?.some(sub => sub.url === url)
+
+            // Parent is active if a child is active OR if the parent URL strictly matches (if it has no children logic, though here logic is slightly different)
+            // Actually, for the group to be open (isActive on parent), we usually want it open if we are in a sub-route?
+            // But Shadcn sidebar 'isActive' on a group usually means "expanded".
+            // Let's keep it expanded if URL starts with the item URL (group scope).
+
+            // But for the user complaint: "sub settings is show active". This refers to the leaves.
+            // So we change the leave's isActive logic.
 
             return {
                 ...item,
-                isActive: !!isActive,
+                isActive: item.items?.some(sub => url.startsWith(sub.url)) || url.startsWith(item.url), // Parent expanded state - keep it loose?
                 items: item.items?.map(sub => ({
                     ...sub,
-                    isActive: url.startsWith(sub.url)
+                    isActive: sub.url === url // Strict match for leaves
                 }))
             }
         })

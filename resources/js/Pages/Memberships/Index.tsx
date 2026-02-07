@@ -1,7 +1,6 @@
-import { useState } from "react"
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { Head, useForm } from "@inertiajs/react"
-import { Check, Crown, User as UserIcon, Calendar } from "lucide-react"
+import { Head } from "@inertiajs/react"
+import { Crown, User as UserIcon, Calendar } from "lucide-react"
 
 import { Button } from "@/Components/ui/button"
 import {
@@ -9,16 +8,6 @@ import {
     CardContent,
 } from "@/Components/ui/card"
 import { Badge } from "@/Components/ui/badge"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/Components/ui/dialog"
-import { RadioGroup, RadioGroupItem } from "@/Components/ui/radio-group"
-import { Label } from "@/Components/ui/label"
 import { cn } from "@/lib/utils"
 
 interface PageProps {
@@ -34,54 +23,7 @@ interface PageProps {
     } | null
 }
 
-export default function MembershipIndex({ auth, fees, mySubscription }: PageProps) {
-    // --- USER STATE ---
-    const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
-    const [open, setOpen] = useState(false)
-    const form = useForm({ type: 'monthly', payment_method: 'cash' })
-
-    // --- SHARED DATA (Plans Info) ---
-    const plans = [
-        {
-            id: 'monthly',
-            name: 'Monthly Member',
-            price: fees.fee_membership_monthly,
-            features: ['Access to member rates', 'Priority booking (7 days)', 'Cancel anytime'],
-            color: 'bg-blue-500'
-        },
-        {
-            id: 'annual',
-            name: 'Annual Pro',
-            price: fees.fee_membership_annual,
-            features: ['All Monthly features', '2 Free Guest Passes', 'Save 20% vs Monthly'],
-            featured: true,
-            color: 'bg-emerald-600'
-        },
-        {
-            id: 'lifetime',
-            name: 'Lifetime Elite',
-            price: fees.fee_membership_lifetime,
-            features: ['Never pay fees again', 'VIP Locker Access', 'Exclusive Events'],
-            color: 'bg-purple-600'
-        }
-    ]
-
-    // --- USER HANDLERS ---
-    const handleSelectPlan = (planId: string) => {
-        setSelectedPlan(planId)
-        form.setData('type', planId)
-        setOpen(true)
-    }
-
-    const submitSubscription = (e: React.FormEvent) => {
-        e.preventDefault()
-        form.post(route('memberships.store'), {
-            onSuccess: () => setOpen(false)
-        })
-    }
-
-    const currentPlanDetails = plans.find(p => p.id === selectedPlan)
-
+export default function MembershipIndex({ auth, mySubscription }: PageProps) {
     return (
         <AuthenticatedLayout
             user={auth.user}
@@ -125,90 +67,14 @@ export default function MembershipIndex({ auth, fees, mySubscription }: PageProp
                                         </div>
                                         <div>
                                             <h3 className="text-xl font-medium text-gray-900">No Active Membership</h3>
-                                            <p className="text-gray-500">Upgrade to enjoy exclusive benefits and discounts.</p>
+                                            <p className="text-gray-500">Please contact the front desk to upgrade your membership.</p>
                                         </div>
                                     </CardContent>
                                 </Card>
                             )}
                         </div>
                     </div>
-
-                    {!mySubscription && (
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
-                            {plans.map((plan) => (
-                                <Card key={plan.id} className={cn(
-                                    "flex flex-col relative transition-all hover:scale-105 duration-300",
-                                    plan.featured ? "border-emerald-500 shadow-xl scale-105 z-10" : "border-gray-200"
-                                )}>
-                                    {plan.featured && (
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2">
-                                            <Badge className="bg-emerald-500 hover:bg-emerald-600 text-xs uppercase px-3 py-1">
-                                                Recommended
-                                            </Badge>
-                                        </div>
-                                    )}
-                                    <CardContent className="p-8 flex-1 flex flex-col">
-                                        <h3 className="text-xl font-semibold text-gray-900 mb-4">{plan.name}</h3>
-                                        <div className="flex items-baseline mb-6">
-                                            <span className="text-4xl font-bold tracking-tight text-gray-900">₱{plan.price}</span>
-                                            <span className="ml-1 text-gray-500">{plan.id === 'lifetime' ? '/once' : `/${plan.id === 'monthly' ? 'mo' : 'yr'}`}</span>
-                                        </div>
-                                        <ul className="space-y-4 mb-8 flex-1">
-                                            {plan.features.map((feature, idx) => (
-                                                <li key={idx} className="flex items-start">
-                                                    <div className="flex-shrink-0">
-                                                        <Check className={cn("h-5 w-5", plan.color.replace('bg-', 'text-'))} />
-                                                    </div>
-                                                    <p className="ml-3 text-sm text-gray-600">{feature}</p>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <Button
-                                            onClick={() => handleSelectPlan(plan.id)}
-                                            className={cn("w-full transition-colors", plan.color, "hover:opacity-90")}
-                                        >
-                                            Choose {plan.name}
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            ))}
-                        </div>
-                    )}
                 </div>
-
-                <Dialog open={open} onOpenChange={setOpen}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Confirm Subscription</DialogTitle>
-                            <DialogDescription>
-                                Upgrade to <strong>{currentPlanDetails?.name}</strong> for ₱{currentPlanDetails?.price}.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={submitSubscription} className="space-y-4">
-                            <div className="space-y-2">
-                                <Label>Payment Method</Label>
-                                <RadioGroup
-                                    defaultValue={form.data.payment_method}
-                                    onValueChange={(val) => form.setData('payment_method', val)}
-                                    className="flex flex-col space-y-1"
-                                >
-                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-slate-50">
-                                        <RadioGroupItem value="cash" id="cash" />
-                                        <Label htmlFor="cash" className="flex-1 cursor-pointer">Cash Payment (at Counter)</Label>
-                                    </div>
-                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-slate-50">
-                                        <RadioGroupItem value="gcash" id="gcash" />
-                                        <Label htmlFor="gcash" className="flex-1 cursor-pointer">GCash (e-Wallet)</Label>
-                                    </div>
-                                </RadioGroup>
-                            </div>
-                            <DialogFooter>
-                                <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
-                                <Button type="submit" disabled={form.processing}>Confirm & Upgrade</Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
             </div>
         </AuthenticatedLayout>
     )

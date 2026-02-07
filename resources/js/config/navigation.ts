@@ -69,6 +69,12 @@ export const navMain: NavItem[] = [
             { title: "Add Membership", url: "/memberships/create", roles: ['admin', 'staff'] },
         ],
     },
+    {
+        title: "Payments",
+        url: "/payments/verify",
+        icon: CreditCard,
+        roles: ['admin', 'staff'],
+    },
     // {
     //     title: "Payments",
     //     url: "/payments",
@@ -82,13 +88,19 @@ export const navMain: NavItem[] = [
     {
         title: "Users",
         url: "/users",
-        icon: Users,
+        icon: Receipt,
         roles: ['admin', 'staff'],
-        items: [
-            { title: "All Users", url: "/users", roles: ['admin', 'staff'] },
-            { title: "Add User", url: "/users/create", roles: ['admin'] },
-        ],
     },
+    // {
+    //     title: "Users",
+    //     url: "/users",
+    //     icon: Users,
+    //     roles: ['admin', 'staff'],
+    //     items: [
+    //         { title: "All Users", url: "/users", roles: ['admin', 'staff'] },
+    //         { title: "Add User", url: "/users/create", roles: ['admin'] },
+    //     ],
+    // },
     {
         title: "Reports",
         url: "/reports",
@@ -101,14 +113,19 @@ export const navMain: NavItem[] = [
         ],
     },
     {
+        title: "Expenses",
+        url: "/expenses",
+        icon: Receipt,
+        roles: ['admin'],
+    },
+    {
         title: "Settings",
         url: "/settings",
         icon: Settings2,
         roles: ['admin'],
         items: [
             { title: "General", url: "/settings", roles: ['admin'] },
-            { title: "Fees & Pricing", url: "/settings/fees", roles: ['admin'] },
-            { title: "Discounts", url: "/settings/discounts", roles: ['admin'] },
+            { title: "Activity Logs", url: "/settings/activity-logs", roles: ['admin'] },
         ],
     },
 ]

@@ -253,7 +253,7 @@ class CourtBookingController extends Controller
         // Staff bookings are auto-paid, member/non-member bookings are pending
         $paymentStatus = $isStaff ? 'paid' : 'pending';
 
-        CourtBooking::create([
+        $booking = CourtBooking::create([
             'user_id' => $userId,
             'staff_id' => $isStaff ? auth()->id() : null,
             'schedule_type' => $request->schedule_type,
@@ -269,6 +269,13 @@ class CourtBookingController extends Controller
             'total_amount' => $total,
             'discount_applied' => $discount,
         ]);
+
+        // Log Activity
+        $logDescription = $isStaff
+            ? "Staff booked a court for " . ($userId ? User::find($userId)->name : 'Guest')
+            : "User booked a court";
+
+        \App\Services\ActivityLogger::log('court_booking', $logDescription, $booking);
 
         // Redirect to my bookings for non-staff, dashboard for staff
         if ($isStaff) {

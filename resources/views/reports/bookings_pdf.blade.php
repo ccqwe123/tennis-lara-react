@@ -79,6 +79,9 @@
                 <th>Schedule</th>
                 <th>Games</th>
                 <th>Trainer</th>
+                <th>Priest</th>
+                <th>Picker</th>
+                <th>Picker Fee</th>
                 <th>Status</th>
                 <th>Amount</th>
             </tr>
@@ -92,6 +95,9 @@
                     <td>{{ ucfirst($booking->schedule_type) }}</td>
                     <td>{{ $booking->games_count }}</td>
                     <td>{{ $booking->with_trainer ? 'Yes' : 'No' }}</td>
+                    <td>{{ $booking->priest_count }}</td>
+                    <td>{{ $booking->with_picker_label }}</td>
+                    <td>{{ number_format($booking->picker_fee_calculated, 2) }}</td>
                     <td class="{{ $booking->payment_status }}">
                         {{ ucfirst($booking->payment_status) }}
                     </td>

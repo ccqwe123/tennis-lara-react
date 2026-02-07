@@ -194,8 +194,7 @@ class MemberSubscriptionController extends Controller
         // Auto-upgrade user status
         $user = User::find($userId);
         $user->membership_status = 'member';
-        $user->type = 'member';
-        if ($user->type === 'non-member') {
+        if ($user->type !== \App\Enums\UserType::STUDENT) {
             $user->type = \App\Enums\UserType::MEMBER;
         }
         $user->save();
