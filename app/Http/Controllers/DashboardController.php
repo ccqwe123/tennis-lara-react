@@ -17,10 +17,52 @@ class DashboardController extends Controller
         $user = auth()->user();
 
         if ($user->hasStaffAccess()) {
+            $this->checkExpiryNotifications();
             return $this->adminDashboard();
         }
 
         return $this->userDashboard($user);
+    }
+
+    /**
+     * Lazy check for memberships expiring in 3 days.
+     * Runs once per day when a staff member visits the dashboard.
+     */
+    private function checkExpiryNotifications()
+    {
+        $lastCheck = cache('last_membership_expiry_check');
+        $today = now()->format('Y-m-d');
+
+        if ($lastCheck === $today) {
+            return;
+        }
+
+        // Check for expiry within the next 3 days (tomorrow, day after, 3 days from now)
+        $startDate = now()->addDay()->format('Y-m-d');
+        $endDate = now()->addDays(3)->format('Y-m-d');
+
+        $subscriptions = MemberSubscription::whereBetween('end_date', [$startDate, $endDate])
+            ->with('user')
+            ->get();
+
+        foreach ($subscriptions as $subscription) {
+            if (!$subscription->user)
+                continue;
+
+            $notificationDate = $subscription->end_date->format('M d, Y');
+
+            // Check if we already notified this user about this specific expiration date
+            $alreadyNotified = $subscription->user->notifications()
+                ->where('type', 'App\Notifications\MembershipExpiryNotification')
+                ->where('data->message', 'like', "%{$notificationDate}%")
+                ->exists();
+
+            if (!$alreadyNotified) {
+                $subscription->user->notify(new \App\Notifications\MembershipExpiryNotification($subscription));
+            }
+        }
+
+        cache(['last_membership_expiry_check' => $today], now()->addDay());
     }
 
     private function adminDashboard()

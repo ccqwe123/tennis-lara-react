@@ -74,6 +74,11 @@ export default function EditTournament({ auth, tournament, errors = {} }: PagePr
     return (
         <AuthenticatedLayout
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Edit Tournament</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Manage Tournaments', href: route('tournaments.manage') },
+                { label: 'Edit Tournament' },
+            ]}
         >
             <Head title="Edit Tournament" />
 

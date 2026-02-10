@@ -3,6 +3,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { Head, Link, useForm, router } from "@inertiajs/react"
 import { format } from "date-fns"
 import { Calendar, CheckCircle2, ChevronLeft, Trophy, Pencil, Check, Copy, Download, Banknote, CreditCard, Lock, AlertCircle } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/Components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
@@ -59,6 +60,10 @@ export default function TournamentShow({ auth, tournament, myRegistration, gcash
         post(route('tournaments.register', tournament.id), {
             onSuccess: () => {
                 setOpen(false)
+                toast.success("Registration Successful", {
+                    description: "Please complete your payment to confirm your slot.",
+                    duration: 5000,
+                })
                 // Show payment dialog immediately after successful registration if not paid
                 if (data.payment_method === 'gcash' || data.payment_method === 'cash') {
                     // Slight delay to allow page reload to update myRegistration prop (though Inertia handles this, 
@@ -92,8 +97,12 @@ export default function TournamentShow({ auth, tournament, myRegistration, gcash
 
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Tournament Details</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Tournaments', href: route('tournaments.index') },
+                { label: tournament.name },
+            ]}
         >
             <Head title={tournament.name} />
 
@@ -208,20 +217,28 @@ export default function TournamentShow({ auth, tournament, myRegistration, gcash
                                                         </DialogHeader>
 
                                                         <form onSubmit={submitRegistration} className="space-y-4">
-                                                            <div className="space-y-2">
-                                                                <Label>Payment Method</Label>
+                                                            <div className="space-y-3">
+                                                                <Label className="text-base font-semibold">Payment Method</Label>
                                                                 <RadioGroup
                                                                     defaultValue={data.payment_method}
                                                                     onValueChange={(val) => setData('payment_method', val)}
-                                                                    className="flex flex-col space-y-1"
+                                                                    className="grid grid-cols-2 gap-4"
                                                                 >
-                                                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-slate-50">
-                                                                        <RadioGroupItem value="cash" id="cash" />
-                                                                        <Label htmlFor="cash" className="flex-1 cursor-pointer">Cash Payment</Label>
+                                                                    <div>
+                                                                        <RadioGroupItem value="cash" id="r-cash" className="peer sr-only" />
+                                                                        <Label htmlFor="r-cash" className="flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-6 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-32 justify-center">
+                                                                            <Banknote className="mb-2 h-8 w-8 text-emerald-600" />
+                                                                            <span className="font-bold text-gray-900">Cash</span>
+                                                                            <span className="text-sm text-gray-500">Pay at counter</span>
+                                                                        </Label>
                                                                     </div>
-                                                                    <div className="flex items-center space-x-2 border p-3 rounded-md cursor-pointer hover:bg-slate-50">
-                                                                        <RadioGroupItem value="gcash" id="gcash" />
-                                                                        <Label htmlFor="gcash" className="flex-1 cursor-pointer">GCash (e-Wallet)</Label>
+                                                                    <div>
+                                                                        <RadioGroupItem value="gcash" id="r-gcash" className="peer sr-only" />
+                                                                        <Label htmlFor="r-gcash" className="flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-6 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-32 justify-center">
+                                                                            <CreditCard className="mb-2 h-8 w-8 text-blue-500" />
+                                                                            <span className="font-bold text-gray-900">GCash</span>
+                                                                            <span className="text-sm text-gray-500">Pay online</span>
+                                                                        </Label>
                                                                     </div>
                                                                 </RadioGroup>
                                                             </div>

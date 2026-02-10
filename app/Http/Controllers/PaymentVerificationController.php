@@ -72,6 +72,7 @@ class PaymentVerificationController extends Controller
             'registrations' => $registrations,
             'filters' => [
                 'date' => $date,
+                'tab' => $request->input('tab', 'bookings'),
             ],
             'isAdmin' => $isAdmin,
         ]);
@@ -87,6 +88,14 @@ class PaymentVerificationController extends Controller
 
         \App\Services\ActivityLogger::log('payment_verify_booking', "{$request->user()->type->label()} confirmed payment for booking {$booking->payment_reference}", $booking);
 
+        if ($booking->user) {
+            $booking->user->notify(new \App\Notifications\PaymentStatusNotification(
+                'Payment Confirmed',
+                'Your payment for booking ' . $booking->payment_reference . ' has been confirmed.',
+                '/bookings/my-bookings'
+            ));
+        }
+
         return redirect()->back()->with('success', 'Booking marked as paid.');
     }
 
@@ -99,6 +108,14 @@ class PaymentVerificationController extends Controller
         ]);
 
         \App\Services\ActivityLogger::log('payment_verify_tournament', "{$request->user()->type->label()} confirmed payment for tournament registration {$registration->payment_reference}", $registration);
+
+        if ($registration->user) {
+            $registration->user->notify(new \App\Notifications\PaymentStatusNotification(
+                'Payment Confirmed',
+                'Your payment for tournament registration ' . $registration->payment_reference . ' has been confirmed.',
+                '/tournaments/' . $registration->tournament_id
+            ));
+        }
 
         return redirect()->back()->with('success', 'Registration marked as paid.');
     }

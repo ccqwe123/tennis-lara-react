@@ -6,7 +6,7 @@ import { GalleryVerticalEnd } from "lucide-react"
 
 import { NavMain } from "@/Components/ui/nav-main"
 import { NavProjects } from "@/Components/ui/nav-projects"
-import { NavUser } from "@/Components/ui/nav-user"
+// import { NavUser } from "@/Components/ui/nav-user"
 import {
     Sidebar,
     SidebarContent,
@@ -71,8 +71,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <Sidebar collapsible="icon" {...props} className="border-r-0">
             <SidebarHeader>
                 <div className="flex items-center gap-2 px-2 py-2">
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg overflow-hidden bg-transparent">
-                        <img src="/images/logo.png" alt="Tennis Club" className="size-8 object-contain" />
+                    <div className="flex aspect-square size-12 items-center justify-center rounded-lg overflow-hidden bg-transparent">
+                        <img src="/images/favicons/android-chrome-192x192.png" alt="Tennis Club" className="size-12 object-contain" />
                     </div>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                         <span className="truncate font-semibold">{team.name}</span>
@@ -89,7 +89,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </SidebarContent>
 
             <SidebarFooter>
-                {user && <NavUser user={user} />}
+                <div className="p-4 text-xs text-center text-muted-foreground">
+                    v1.0.0
+                </div>
             </SidebarFooter>
             <SidebarRail />
         </Sidebar>

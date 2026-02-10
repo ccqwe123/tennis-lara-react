@@ -52,6 +52,8 @@ class HandleInertiaRequests extends Middleware
                     'hasMemberAccess' => $user->hasMemberAccess(),
                 ] : null,
             ],
+            'notifications' => $user ? $user->notifications()->latest()->take(8)->get() : [],
+            'unreadCount' => $user ? $user->unreadNotifications()->count() : 0,
         ];
     }
 }

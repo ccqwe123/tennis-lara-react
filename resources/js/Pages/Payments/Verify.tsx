@@ -46,6 +46,7 @@ interface Props {
     registrations: PaymentRecord[]
     filters: {
         date: string
+        tab?: string
     }
     isAdmin: boolean
 }
@@ -62,7 +63,8 @@ export default function VerifyPayments({ auth, bookings, registrations, filters,
         setDate(newDate)
         if (newDate) {
             router.get(route('payments.verify'), {
-                date: format(newDate, "yyyy-MM-dd")
+                date: format(newDate, "yyyy-MM-dd"),
+                tab: filters.tab
             }, { preserveState: true })
         }
     }
@@ -99,7 +101,13 @@ export default function VerifyPayments({ auth, bookings, registrations, filters,
     const totalUnpaidRegistrations = registrations.reduce((sum, item) => sum + Number(item.amount || item.expected_amount || 0), 0)
 
     return (
-        <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Verify Payments</h2>}>
+        <AuthenticatedLayout
+            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Verify Payments</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Verify Payments' },
+            ]}
+        >
             <Head title="Verify Payments" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8 space-y-6">
@@ -136,10 +144,10 @@ export default function VerifyPayments({ auth, bookings, registrations, filters,
                     </Card>
                 )}
 
-                <Tabs defaultValue="bookings" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 lg:w-[400px]">
-                        <TabsTrigger value="bookings">Court Bookings</TabsTrigger>
-                        <TabsTrigger value="tournaments">Tournament Registrations</TabsTrigger>
+                <Tabs defaultValue={filters.tab || "bookings"} className="w-full">
+                    <TabsList className="grid w-full grid-cols-2 lg:w-[500px]">
+                        <TabsTrigger className="text-xs md:text-sm" value="bookings">Court Bookings</TabsTrigger>
+                        <TabsTrigger className="text-xs md:text-sm" value="tournaments">Tournament Registrations</TabsTrigger>
                     </TabsList>
 
                     {/* Bookings Content */}
@@ -154,7 +162,7 @@ export default function VerifyPayments({ auth, bookings, registrations, filters,
                         </div>
 
                         <Card>
-                            <div className="rounded-md border">
+                            <div className="rounded-md border overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-gray-50 border-b">
                                         <tr>
@@ -205,7 +213,7 @@ export default function VerifyPayments({ auth, bookings, registrations, filters,
                         </div>
 
                         <Card>
-                            <div className="rounded-md border">
+                            <div className="rounded-md border overflow-x-auto">
                                 <table className="w-full text-sm">
                                     <thead className="bg-gray-50 border-b">
                                         <tr>

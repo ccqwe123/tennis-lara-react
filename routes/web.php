@@ -26,6 +26,11 @@ Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit')
 Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
+// Notifications
+Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');
+Route::post('/notifications/{id}/read', [App\Http\Controllers\NotificationController::class, 'markAsRead'])->name('notifications.read');
+Route::post('/notifications/read-all', [App\Http\Controllers\NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
+
 // POS / Bookings
 Route::get('/bookings', [App\Http\Controllers\CourtBookingController::class, 'index'])->name('bookings.index');
 Route::get('/bookings/create', [App\Http\Controllers\CourtBookingController::class, 'create'])->name('bookings.create');
@@ -80,5 +85,9 @@ Route::get('/reports/members', [App\Http\Controllers\ReportsController::class, '
 Route::get('/reports/members/export', [App\Http\Controllers\ReportsController::class, 'exportMemberReport'])->name('reports.members.export');
 Route::get('/reports/revenue', [App\Http\Controllers\ReportsController::class, 'revenueReport'])->name('reports.revenue');
 Route::get('/reports/revenue/export', [App\Http\Controllers\ReportsController::class, 'exportRevenueReport'])->name('reports.revenue.export');
+Route::get('/reports/tournaments', [App\Http\Controllers\ReportsController::class, 'tournamentReport'])->name('reports.tournaments');
+Route::get('/reports/tournaments/export', [App\Http\Controllers\ReportsController::class, 'exportTournamentReport'])->name('reports.tournaments.export');
+Route::get('/reports/tournaments/{tournament}/participants', [App\Http\Controllers\ReportsController::class, 'tournamentParticipants'])->name('reports.tournaments.participants');
+Route::get('/reports/tournaments/{tournament}/participants/export', [App\Http\Controllers\ReportsController::class, 'exportTournamentParticipants'])->name('reports.tournaments.participants.export');
 
 require __DIR__ . '/auth.php';

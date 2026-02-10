@@ -182,7 +182,14 @@ export default function BookingReports({ auth, bookings, filters, stats }: Props
     }
 
     return (
-        <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Booking Reports</h2>}>
+        <AuthenticatedLayout
+            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Booking Reports</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Reports' },
+                { label: 'Bookings' },
+            ]}
+        >
             <Head title="Booking Reports" />
 
             <style>{`
@@ -292,7 +299,7 @@ export default function BookingReports({ auth, bookings, filters, stats }: Props
 
                             {/* Type */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Customer Type</label>
+                                <label className="text-sm font-medium">Type</label>
                                 <Select value={type} onValueChange={setType}>
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="All types" />
@@ -302,6 +309,7 @@ export default function BookingReports({ auth, bookings, filters, stats }: Props
                                         <SelectItem value="member">Member</SelectItem>
                                         <SelectItem value="non-member">Non-Member</SelectItem>
                                         <SelectItem value="guest">Guest</SelectItem>
+                                        <SelectItem value="student">Student</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

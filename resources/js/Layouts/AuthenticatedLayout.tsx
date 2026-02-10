@@ -1,3 +1,6 @@
+import { HeaderNotifications } from "@/Components/HeaderNotifications"
+import { HeaderUserMenu } from "@/Components/HeaderUserMenu"
+import { usePage } from "@inertiajs/react"
 import { ReactNode } from "react"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar"
 import { AppSidebar } from "@/Components/ui/app-sidebar"
@@ -23,6 +26,8 @@ export default function AuthenticatedLayout({
     header,
     breadcrumbs = [],
 }: AuthenticatedLayoutProps) {
+    const user = usePage().props.auth.user
+
     return (
         <TooltipProvider>
             <SidebarProvider>
@@ -33,38 +38,27 @@ export default function AuthenticatedLayout({
                         <Separator orientation="vertical" className="mr-2 h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
-                                <BreadcrumbItem className="hidden md:block">
-                                    <BreadcrumbLink href="/dashboard">
-                                        Tennis Club
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                {breadcrumbs.length > 0 && (
-                                    <BreadcrumbSeparator className="hidden md:block" />
-                                )}
-                                {breadcrumbs.map((crumb, index) => (
+                                {breadcrumbs.map((breadcrumb, index) => (
                                     <BreadcrumbItem key={index}>
-                                        {index < breadcrumbs.length - 1 ? (
-                                            <>
-                                                <BreadcrumbLink href={crumb.href}>
-                                                    {crumb.label}
-                                                </BreadcrumbLink>
-                                                <BreadcrumbSeparator className="hidden md:block" />
-                                            </>
+                                        {breadcrumb.href ? (
+                                            <BreadcrumbLink href={breadcrumb.href}>
+                                                {breadcrumb.label}
+                                            </BreadcrumbLink>
                                         ) : (
-                                            <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                                            <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
+                                        )}
+                                        {index < breadcrumbs.length - 1 && (
+                                            <BreadcrumbSeparator />
                                         )}
                                     </BreadcrumbItem>
                                 ))}
-                                {header && breadcrumbs.length === 0 && (
-                                    <>
-                                        <BreadcrumbSeparator className="hidden md:block" />
-                                        <BreadcrumbItem>
-                                            <BreadcrumbPage>{header}</BreadcrumbPage>
-                                        </BreadcrumbItem>
-                                    </>
-                                )}
                             </BreadcrumbList>
                         </Breadcrumb>
+
+                        <div className="ml-auto flex items-center gap-2">
+                            <HeaderNotifications />
+                            <HeaderUserMenu user={user} />
+                        </div>
                     </header>
                     <main className="flex-1 overflow-auto">
                         <div className="p-4 md:p-0">{children}</div>

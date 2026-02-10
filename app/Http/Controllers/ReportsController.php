@@ -30,9 +30,8 @@ class ReportsController extends Controller
             if ($filters['type'] === 'guest') {
                 $query->whereNull('user_id');
             } else {
-                $query->whereHas('user', function ($q) use ($filters) {
-                    $q->where('type', $filters['type']);
-                });
+                $query->where('user_type_at_booking', $filters['type'])
+                    ->whereNotNull('user_id');
             }
         }
 
@@ -123,9 +122,8 @@ class ReportsController extends Controller
             if ($filters['type'] === 'guest') {
                 $query->whereNull('user_id');
             } else {
-                $query->whereHas('user', function ($q) use ($filters) {
-                    $q->where('type', $filters['type']);
-                });
+                $query->where('user_type_at_booking', $filters['type'])
+                    ->whereNotNull('user_id');
             }
         }
         if (isset($filters['with_trainer']) && $filters['with_trainer'] !== 'all') {
@@ -185,7 +183,7 @@ class ReportsController extends Controller
                 $booking->with_picker_label = $pickersUsed > 0 ? 'Yes' : 'No';
                 return $booking;
             });
-
+            info($bookings);
             $pdf = Pdf::loadView('reports.bookings_pdf', ['bookings' => $bookings, 'filters' => $filters]);
             return $pdf->download('booking_report.pdf');
         }
@@ -215,7 +213,8 @@ class ReportsController extends Controller
                 $writer->addRow([
                     'Date' => $booking->booking_date,
                     'Customer' => $booking->user ? $booking->user->name : ($booking->guest_name ?? 'Guest'),
-                    'Type' => $booking->user ? $booking->user->type->label() : 'Guest',
+                    // Use historical user type if available, else fallback to current type or 'Guest'
+                    'Type' => $booking->user ? $booking->user_type_at_booking : 'Guest',
                     'Schedule' => ucfirst($booking->schedule_type),
                     'Games' => $booking->games_count,
                     'Trainer' => $booking->with_trainer ? 'Yes' : 'No',
@@ -264,7 +263,8 @@ class ReportsController extends Controller
             'date' => Carbon::parse($booking->booking_date)->format('M d, Y'),
             'time' => $booking->schedule_type === 'day' ? 'Day' : 'Night',
             'customer' => $booking->user ? $booking->user->name : ($booking->guest_name ?? 'Guest'),
-            'type' => $booking->user ? $booking->user->type->label() : 'Guest',
+            'type' => $booking->user ? $booking->user_type_at_booking : 'Guest',
+            // 'type' => $booking->user ? $booking->user->type->label() : 'Guest',
             'games' => $booking->games_count,
             'with_trainer' => $booking->with_trainer ? 'Yes' : 'No',
             'priest_count' => $booking->priest_count ?? 0,
@@ -562,5 +562,207 @@ class ReportsController extends Controller
         }
 
         return $result;
+    }
+
+    public function tournamentReport(Request $request)
+    {
+        $filters = $request->only(['date_from', 'date_to', 'status', 'search']);
+
+        $query = \App\Models\Tournament::query()->withCount('registrations');
+
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        }
+
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('start_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('end_date', '<=', $filters['date_to']);
+        }
+
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $query->where('status', $filters['status']);
+        }
+
+
+
+        $tournaments = $query->paginate($request->input('per_page', 10));
+
+        $tournaments->through(function ($tournament) {
+            return [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+                'start_date' => $tournament->start_date->format('M d, Y'),
+                'end_date' => $tournament->end_date->format('M d, Y'),
+                'status' => ucfirst($tournament->status),
+                'fee' => number_format($tournament->registration_fee, 2),
+                'participants_count' => $tournament->registrations_count,
+                'max_participants' => $tournament->max_participants,
+            ];
+        });
+
+        return Inertia::render('Reports/Tournaments/Index', [
+            'tournaments' => $tournaments,
+            'filters' => $filters,
+        ]);
+    }
+
+    public function exportTournamentReport(Request $request)
+    {
+        $filters = $request->only(['date_from', 'date_to', 'status', 'search']);
+        $format = $request->query('format', 'pdf');
+
+        $query = \App\Models\Tournament::query()->withCount('registrations');
+
+        if (!empty($filters['search'])) {
+            $query->where('name', 'like', '%' . $filters['search'] . '%');
+        }
+        if (!empty($filters['date_from'])) {
+            $query->whereDate('start_date', '>=', $filters['date_from']);
+        }
+        if (!empty($filters['date_to'])) {
+            $query->whereDate('end_date', '<=', $filters['date_to']);
+        }
+        if (!empty($filters['status']) && $filters['status'] !== 'all') {
+            $query->where('status', $filters['status']);
+        }
+
+
+
+        $tournaments = $query->get();
+
+        $data = $tournaments->map(function ($tournament) {
+            return [
+                'name' => $tournament->name,
+                'start_date' => $tournament->start_date->format('M d, Y'),
+                'end_date' => $tournament->end_date->format('M d, Y'),
+                'status' => ucfirst($tournament->status),
+                'fee' => number_format($tournament->registration_fee, 2),
+                'participants' => $tournament->registrations_count . ' / ' . $tournament->max_participants,
+            ];
+        });
+
+        if ($format === 'json') {
+            return response()->json($data);
+        }
+
+        if ($format === 'xlsx') {
+            $writer = SimpleExcelWriter::streamDownload('tournaments_report.xlsx');
+            foreach ($data as $item) {
+                $writer->addRow($item);
+            }
+            return $writer->toBrowser();
+        }
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('reports.tournaments_pdf', ['tournaments' => $data, 'filters' => $filters]);
+            return $pdf->download('tournaments_report.pdf');
+        }
+    }
+
+    public function tournamentParticipants(Request $request, \App\Models\Tournament $tournament)
+    {
+        $filters = $request->only(['search', 'payment_status', 'payment_method']);
+
+        $query = $tournament->registrations()->with('user');
+
+        if (!empty($filters['search'])) {
+            $query->whereHas('user', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'all') {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+
+        if (!empty($filters['payment_method']) && $filters['payment_method'] !== 'all') {
+            $query->where('payment_method', $filters['payment_method']);
+        }
+
+        // Default sorting
+        $query->orderBy('created_at', 'desc');
+
+        $participants = $query->paginate($request->input('per_page', 10))
+            ->withQueryString();
+
+        $participants->through(function ($participant) {
+            return [
+                'id' => $participant->id,
+                'name' => $participant->user->name,
+                'email' => $participant->user->email,
+                // 'user_type' => $participant->user_type_at_booking ?? $participant->user->type->label(),
+                'user_type' => $participant->user_type_at_booking ?? 'N/A',
+                'payment_method' => ucfirst($participant->payment_method),
+                'payment_status' => ucfirst($participant->payment_status),
+                'amount' => number_format($participant->amount_paid, 2),
+                'registered_at' => $participant->created_at->format('M d, Y H:i'),
+            ];
+        });
+
+        return Inertia::render('Reports/Tournaments/Participants', [
+            'tournament' => $tournament,
+            'participants' => $participants,
+            'filters' => $filters,
+        ]);
+    }
+
+    public function exportTournamentParticipants(Request $request, \App\Models\Tournament $tournament)
+    {
+        $filters = $request->only(['search', 'payment_status', 'payment_method']);
+        $format = $request->query('format', 'pdf');
+
+        $query = $tournament->registrations()->with('user');
+
+        if (!empty($filters['search'])) {
+            $query->whereHas('user', function ($q) use ($filters) {
+                $q->where('name', 'like', '%' . $filters['search'] . '%')
+                    ->orWhere('email', 'like', '%' . $filters['search'] . '%');
+            });
+        }
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'all') {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+        if (!empty($filters['payment_method']) && $filters['payment_method'] !== 'all') {
+            $query->where('payment_method', $filters['payment_method']);
+        }
+
+        // Default sorting
+        $query->orderBy('created_at', 'desc');
+
+        $participants = $query->get()->map(function ($participant) {
+            return [
+                'name' => $participant->user->name,
+                'email' => $participant->user->email,
+                'user_type' => $participant->user_type_at_booking ?? 'N/A',
+                'payment_method' => ucfirst($participant->payment_method),
+                'payment_status' => ucfirst($participant->payment_status),
+                'amount' => number_format($participant->amount_paid, 2),
+                'registered_at' => $participant->created_at->format('M d, Y H:i'),
+            ];
+        });
+
+        if ($format === 'json') {
+            return response()->json($participants);
+        }
+
+        if ($format === 'xlsx') {
+            $writer = SimpleExcelWriter::streamDownload('tournament_participants.xlsx');
+            foreach ($participants as $p) {
+                $writer->addRow($p);
+            }
+            return $writer->toBrowser();
+        }
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('reports.tournament_participants_pdf', [
+                'tournament' => $tournament,
+                'participants' => $participants,
+                'filters' => $filters
+            ]);
+            return $pdf->download('tournament_participants.pdf');
+        }
     }
 }

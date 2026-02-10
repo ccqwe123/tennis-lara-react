@@ -146,7 +146,14 @@ export default function MemberReports({ auth, users, filters, stats, memberStatu
     }
 
     return (
-        <AuthenticatedLayout header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Members Report</h2>}>
+        <AuthenticatedLayout
+            header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Members Report</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Reports' },
+                { label: 'Members' },
+            ]}
+        >
             <Head title="Members Report" />
 
             <style>{`

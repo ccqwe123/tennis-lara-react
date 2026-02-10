@@ -29,6 +29,7 @@ interface Registration {
     user_id: number
     user_name: string
     user_email: string
+    user_type: 'member' | 'non-member' | 'guest'
     payment_method: 'cash' | 'gcash'
     payment_status: 'paid' | 'pending' | 'unpaid'
     amount_paid: string
@@ -151,6 +152,11 @@ export default function Participants({ auth, tournament, registrations, summary 
                     </h2>
                 </div>
             }
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Manage Tournaments', href: route('tournaments.manage') },
+                { label: 'Participants' },
+            ]}
         >
             <Head title={`Participants - ${tournament.name}`} />
 
@@ -244,6 +250,7 @@ export default function Participants({ auth, tournament, registrations, summary 
                                         <TableRow className="bg-slate-50">
                                             <TableHead className="font-semibold">Participant</TableHead>
                                             <TableHead className="font-semibold">Email</TableHead>
+                                            <TableHead className="font-semibold">Type</TableHead>
                                             <TableHead className="font-semibold text-center">Payment Method</TableHead>
                                             <TableHead className="font-semibold text-center">Payment Status</TableHead>
                                             <TableHead className="font-semibold text-right">Amount</TableHead>
@@ -267,6 +274,9 @@ export default function Participants({ auth, tournament, registrations, summary 
                                                     </TableCell>
                                                     <TableCell className="text-gray-600">
                                                         {registration.user_email}
+                                                    </TableCell>
+                                                    <TableCell className="text-gray-600">
+                                                        {registration.user_type}
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         {getPaymentMethodBadge(registration.payment_method)}

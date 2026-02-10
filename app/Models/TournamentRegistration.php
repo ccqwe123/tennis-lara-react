@@ -14,7 +14,8 @@ class TournamentRegistration extends Model
         'payment_method',
         'payment_reference',
         'payment_status',
-        'amount_paid'
+        'amount_paid',
+        'user_type_at_booking',
     ];
 
     protected $casts = [

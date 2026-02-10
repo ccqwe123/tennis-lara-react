@@ -85,8 +85,11 @@ export default function SettingsIndex({ auth, settings, gcashQrCode }: PageProps
 
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">System Settings</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'System Settings' },
+            ]}
         >
             <Head title="Settings" />
 

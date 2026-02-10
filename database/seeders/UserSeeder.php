@@ -67,5 +67,12 @@ class UserSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        // Create 50 users with mixed types
+        User::factory()->count(50)->state(function (array $attributes) {
+            return [
+                'type' => fake()->randomElement([UserType::MEMBER, UserType::NON_MEMBER, UserType::STUDENT]),
+            ];
+        })->create();
     }
 }

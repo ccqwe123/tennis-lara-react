@@ -33,8 +33,11 @@ interface PageProps {
 export default function TournamentIndex({ auth, tournaments }: PageProps) {
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Tournaments</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Tournaments' },
+            ]}
         >
             <Head title="Tournaments" />
 

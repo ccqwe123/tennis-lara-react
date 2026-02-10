@@ -169,8 +169,11 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
 
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Manage Members</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Manage Members' },
+            ]}
         >
             <Head title="Manage Members" />
 

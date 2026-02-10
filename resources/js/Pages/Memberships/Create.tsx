@@ -1,10 +1,20 @@
 import { useState, useEffect } from "react"
 import axios from "axios"
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { Head, useForm } from "@inertiajs/react"
-import { Check, Crown, ChevronsUpDown, User as UserIcon, ArrowLeft } from "lucide-react"
+import { Head, useForm, router } from "@inertiajs/react"
+import { toast } from "sonner"
+import { Check, Banknote, CreditCard, ChevronsUpDown, User as UserIcon, ArrowLeft } from "lucide-react"
 
 import { Button } from "@/Components/ui/button"
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from "@/Components/ui/form"
+
 import {
     Card,
     CardContent,
@@ -23,6 +33,7 @@ import {
 } from "@/Components/ui/dialog"
 import { RadioGroup, RadioGroupItem } from "@/Components/ui/radio-group"
 import { Label } from "@/Components/ui/label"
+
 import { Badge } from "@/Components/ui/badge"
 import {
     Command,
@@ -103,7 +114,12 @@ export default function MembershipCreate({ auth, fees, users }: PageProps) {
     const submitSubscription = (e: React.FormEvent) => {
         e.preventDefault()
         form.post(route('memberships.store'), {
-            onSuccess: () => setOpen(false)
+            onSuccess: () => {
+                setOpen(false)
+                toast.success('Membership Assigned Successfully', {
+                    description: `Assigned ${currentPlanDetails?.name} to user.`,
+                })
+            }
         })
     }
 
@@ -145,6 +161,11 @@ export default function MembershipCreate({ auth, fees, users }: PageProps) {
                     <h2 className="font-semibold text-xl text-gray-800 leading-tight">Assign Membership</h2>
                 </div>
             }
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Manage Members', href: route('memberships.manage') },
+                { label: 'Assign Membership' },
+            ]}
         >
             <Head title="Assign Membership" />
 
@@ -304,21 +325,31 @@ export default function MembershipCreate({ auth, fees, users }: PageProps) {
 
                     <form onSubmit={submitSubscription} className="space-y-4">
                         <div className="space-y-3">
-                            <Label>Payment Method</Label>
-                            <RadioGroup
-                                defaultValue={form.data.payment_method}
-                                onValueChange={(val) => form.setData('payment_method', val)}
-                                className="flex flex-col space-y-2"
-                            >
-                                <div className="flex items-center space-x-3 border-2 border-slate-100 p-3 rounded-lg cursor-pointer hover:border-emerald-500 hover:bg-emerald-50 transition-colors [&:has([data-state=checked])]:border-emerald-500 [&:has([data-state=checked])]:bg-emerald-50">
-                                    <RadioGroupItem value="cash" id="cash_mem" />
-                                    <Label htmlFor="cash_mem" className="flex-1 cursor-pointer font-medium">Cash Payment</Label>
-                                </div>
-                                <div className="flex items-center space-x-3 border-2 border-slate-100 p-3 rounded-lg cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-colors [&:has([data-state=checked])]:border-blue-500 [&:has([data-state=checked])]:bg-blue-50">
-                                    <RadioGroupItem value="gcash" id="gcash_mem" />
-                                    <Label htmlFor="gcash_mem" className="flex-1 cursor-pointer font-medium">GCash (e-Wallet)</Label>
-                                </div>
-                            </RadioGroup>
+                            <div className="space-y-3">
+                                <Label className="text-base font-semibold">Payment Method</Label>
+                                <RadioGroup
+                                    defaultValue={form.data.payment_method}
+                                    onValueChange={(val) => form.setData('payment_method', val)}
+                                    className="grid grid-cols-2 gap-4"
+                                >
+                                    <div>
+                                        <RadioGroupItem value="cash" id="r-cash" className="peer sr-only" />
+                                        <Label htmlFor="r-cash" className="flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-6 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-32 justify-center">
+                                            <Banknote className="mb-2 h-8 w-8 text-emerald-600" />
+                                            <span className="font-bold text-gray-900">Cash</span>
+                                            <span className="text-sm text-gray-500">Pay at counter</span>
+                                        </Label>
+                                    </div>
+                                    <div>
+                                        <RadioGroupItem value="gcash" id="r-gcash" className="peer sr-only" />
+                                        <Label htmlFor="r-gcash" className="flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-6 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-32 justify-center">
+                                            <CreditCard className="mb-2 h-8 w-8 text-blue-500" />
+                                            <span className="font-bold text-gray-900">GCash</span>
+                                            <span className="text-sm text-gray-500">Pay online</span>
+                                        </Label>
+                                    </div>
+                                </RadioGroup>
+                            </div>
                         </div>
 
                         <DialogFooter>

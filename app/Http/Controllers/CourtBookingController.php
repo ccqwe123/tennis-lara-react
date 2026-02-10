@@ -63,7 +63,7 @@ class CourtBookingController extends Controller
                     'id' => $booking->id,
                     'user_name' => $booking->user?->name ?? 'Guest',
                     'user_email' => $booking->user?->email ?? '-',
-                    'membership_status' => $booking->user?->membership_status ?? 'guest',
+                    'membership_status' => $booking->user_id ? $booking?->user_type_at_booking : 'guest',
                     'schedule_type' => $booking->schedule_type,
                     'booking_date' => $booking->booking_date->format('M d, Y'),
                     'booking_date_raw' => $booking->booking_date->format('Y-m-d'),
@@ -268,6 +268,7 @@ class CourtBookingController extends Controller
             'payment_status' => $paymentStatus,
             'total_amount' => $total,
             'discount_applied' => $discount,
+            'user_type_at_booking' => $userType,
         ]);
 
         // Log Activity
@@ -276,6 +277,10 @@ class CourtBookingController extends Controller
             : "User booked a court";
 
         \App\Services\ActivityLogger::log('court_booking', $logDescription, $booking);
+
+        // Notify Admins and Staff
+        $adminsAndStaff = User::whereIn('type', ['admin', 'staff'])->get();
+        \Illuminate\Support\Facades\Notification::send($adminsAndStaff, new \App\Notifications\NewBookingNotification($booking));
 
         // Redirect to my bookings for non-staff, dashboard for staff
         if ($isStaff) {

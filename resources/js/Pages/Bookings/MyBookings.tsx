@@ -98,6 +98,10 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
     return (
         <AuthenticatedLayout
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">My Bookings</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'My Bookings' },
+            ]}
         >
             <div className="py-8 bg-gray-50 min-h-screen">
                 <div className="w-full px-4 sm:px-6 lg:px-8">

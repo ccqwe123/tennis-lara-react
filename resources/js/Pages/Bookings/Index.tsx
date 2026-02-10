@@ -159,8 +159,11 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
 
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">All Bookings</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'All Bookings' },
+            ]}
         >
             <div className="py-8 bg-gray-50 min-h-screen">
                 <div className="w-full px-4 sm:px-6 lg:px-8">

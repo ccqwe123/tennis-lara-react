@@ -110,6 +110,7 @@ export const navMain: NavItem[] = [
             { title: "Booking Reports", url: "/reports/bookings", roles: ['admin', 'staff'] },
             { title: "Revenue Reports", url: "/reports/revenue", roles: ['admin'] },
             { title: "Member Reports", url: "/reports/members", roles: ['admin', 'staff'] },
+            { title: "Tournament Reports", url: "/reports/tournaments", roles: ['admin', 'staff'] },
         ],
     },
     {

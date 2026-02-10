@@ -63,6 +63,11 @@ export default function CreateTournament({ auth, errors = {} }: PageProps) {
     return (
         <AuthenticatedLayout
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Create Tournament</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Manage Tournaments', href: route('tournaments.manage') },
+                { label: 'Create Tournament' },
+            ]}
         >
             <Head title="Create Tournament" />
 

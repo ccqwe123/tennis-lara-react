@@ -9,7 +9,12 @@ export default function Dashboard(props: any) {
     const permissions = auth.permissions
 
     return (
-        <AuthenticatedLayout header="Dashboard">
+        <AuthenticatedLayout
+            header="Dashboard"
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+            ]}
+        >
             <Head title="Dashboard" />
 
             <div className="py-6 px-4 sm:px-6 lg:px-8">

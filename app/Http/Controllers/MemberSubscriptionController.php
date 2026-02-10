@@ -199,7 +199,12 @@ class MemberSubscriptionController extends Controller
         }
         $user->save();
 
-        return redirect()->route('dashboard')->with('success', 'Membership upgrade successful!');
+        $subscription = MemberSubscription::where('user_id', $userId)->latest()->first();
+        if ($subscription) {
+            $user->notify(new \App\Notifications\MembershipStatusNotification($subscription, 'active'));
+        }
+
+        return redirect()->route('memberships.index')->with('success', 'Membership upgrade successful!');
     }
     public function update(Request $request, User $user)
     {

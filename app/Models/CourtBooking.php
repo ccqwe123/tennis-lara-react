@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class CourtBooking extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'user_id',
         'staff_id',
@@ -20,7 +22,8 @@ class CourtBooking extends Model
         'total_amount',
         'picker_selection',
         'priest_count',
-        'discount_applied'
+        'discount_applied',
+        'user_type_at_booking',
     ];
 
     protected $casts = [

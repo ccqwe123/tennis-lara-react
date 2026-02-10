@@ -108,10 +108,10 @@
             @forelse($data as $row)
                 <tr>
                     <td>{{ $row['date'] }}</td>
-                    <td class="text-green">₱{{ number_format($row['income'], 2) }}</td>
-                    <td class="text-red">₱{{ number_format($row['expenses'], 2) }}</td>
+                    <td class="text-green">{{ number_format($row['income'], 2) }}</td>
+                    <td class="text-red">{{ number_format($row['expenses'], 2) }}</td>
                     <td class="{{ $row['net'] >= 0 ? 'text-blue' : 'text-red' }} font-bold">
-                        ₱{{ number_format($row['net'], 2) }}
+                        {{ number_format($row['net'], 2) }}
                     </td>
                 </tr>
             @empty

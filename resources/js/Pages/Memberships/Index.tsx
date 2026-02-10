@@ -26,8 +26,11 @@ interface PageProps {
 export default function MembershipIndex({ auth, mySubscription }: PageProps) {
     return (
         <AuthenticatedLayout
-            user={auth.user}
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">Memberships</h2>}
+            breadcrumbs={[
+                { label: 'Dashboard', href: route('dashboard') },
+                { label: 'Memberships' },
+            ]}
         >
             <Head title="Memberships" />
 

@@ -69,7 +69,6 @@
         <div class="summary-item">Total Bookings: {{ $bookings->count() }}</div>
         <div class="summary-item">Total Amount: ₱{{ number_format($bookings->sum('total_amount'), 2) }}</div>
     </div>
-
     <table>
         <thead>
             <tr>
@@ -91,7 +90,7 @@
                 <tr>
                     <td>{{ \Carbon\Carbon::parse($booking->booking_date)->format('M d, Y') }}</td>
                     <td>{{ $booking->user ? $booking->user->name : ($booking->guest_name ?? 'Guest') }}</td>
-                    <td>{{ $booking->user ? $booking->user->type->label() : 'Guest' }}</td>
+                    <td>{{ $booking->user_id ? $booking->user_type_at_booking : 'Guest' }}</td>
                     <td>{{ ucfirst($booking->schedule_type) }}</td>
                     <td>{{ $booking->games_count }}</td>
                     <td>{{ $booking->with_trainer ? 'Yes' : 'No' }}</td>

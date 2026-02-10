@@ -102,9 +102,14 @@ class TournamentController extends Controller
             'payment_reference' => 'TRN-' . strtoupper(uniqid()),
             'payment_status' => 'unpaid',
             'amount_paid' => $tournament->registration_fee,
+            'user_type_at_booking' => auth()->user()->type->value,
         ]);
 
         \App\Services\ActivityLogger::log('tournament_join', "User joined tournament: {$tournament->name}", $registration);
+
+        // Notify Admins and Staff
+        $adminsAndStaff = \App\Models\User::whereIn('type', ['admin', 'staff'])->get();
+        \Illuminate\Support\Facades\Notification::send($adminsAndStaff, new \App\Notifications\NewTournamentRegistrationNotification($registration));
 
         return back()->with('success', 'Registered successfully!');
     }
@@ -191,9 +196,9 @@ class TournamentController extends Controller
         if (!auth()->user()->isAdmin()) {
             abort(403);
         }
-
+        info($tournament->registrations()->with('user')->get());
         $registrations = $tournament->registrations()
-            ->with('user:id,name,email')
+            ->with('user:id,name,email,type')
             ->get()
             ->map(function ($registration) {
                 return [
@@ -201,6 +206,7 @@ class TournamentController extends Controller
                     'user_id' => $registration->user_id,
                     'user_name' => $registration->user->name,
                     'user_email' => $registration->user->email,
+                    'user_type' => $registration->user_type_at_booking ? ucfirst($registration->user_type_at_booking) : $registration->user->type->value,
                     'payment_method' => $registration->payment_method,
                     'payment_status' => $registration->payment_status,
                     'amount_paid' => $registration->amount_paid,
