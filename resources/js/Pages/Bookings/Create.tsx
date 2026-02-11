@@ -67,12 +67,12 @@ const formSchema = z.object({
     schedule_type: z.enum(["day", "night"]),
     booking_date: z.date(),
     games_count: z.number().min(1).max(4),
-    with_trainer: z.boolean().default(false),
+    with_trainer: z.boolean(),
     payment_method: z.enum(["cash", "gcash"]),
-    is_guest: z.boolean().optional(),
-    picker_selection: z.array(z.boolean()).optional(),
+    is_guest: z.boolean(),
+    picker_selection: z.array(z.boolean()),
     category: z.enum(["single", "double"]),
-    priest_count: z.number().min(0).default(0),
+    priest_count: z.number().min(0),
 })
 
 export default function BookingCreate({ auth, settings, users, isStaff }: PageProps) {

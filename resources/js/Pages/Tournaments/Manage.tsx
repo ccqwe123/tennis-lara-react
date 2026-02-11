@@ -100,13 +100,13 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'open':
-                return <Badge className="bg-green-500 hover:bg-green-600">Open</Badge>
+                return <Badge className="bg-green-500 hover:bg-green-600 text-xs">Open</Badge>
             case 'ongoing':
-                return <Badge className="bg-blue-500 hover:bg-blue-600">Ongoing</Badge>
+                return <Badge className="bg-blue-500 hover:bg-blue-600 text-xs">Ongoing</Badge>
             case 'completed':
-                return <Badge className="bg-gray-500 hover:bg-gray-600">Completed</Badge>
+                return <Badge className="bg-gray-500 hover:bg-gray-600 text-xs">Completed</Badge>
             default:
-                return <Badge variant="secondary">{status}</Badge>
+                return <Badge variant="secondary" className="text-xs">{status}</Badge>
         }
     }
 
@@ -165,7 +165,7 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
                                                 value={search}
                                                 onChange={(e) => setSearch(e.target.value)}
                                                 onKeyDown={(e) => e.key === 'Enter' && handleFilter()}
-                                                className="pl-9"
+                                                className="!pl-9 p-4"
                                             />
                                         </div>
                                     </div>
@@ -177,6 +177,7 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
                                             type="date"
                                             value={dateFrom}
                                             onChange={(e) => setDateFrom(e.target.value)}
+                                            className="p-4"
                                         />
                                     </div>
 
@@ -187,6 +188,7 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
                                             type="date"
                                             value={dateTo}
                                             onChange={(e) => setDateTo(e.target.value)}
+                                            className="p-4"
                                         />
                                     </div>
 
@@ -194,7 +196,7 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
                                     <div className="w-[140px]">
                                         <label className="text-sm font-medium text-gray-700 mb-1 block">Status</label>
                                         <Select value={status} onValueChange={setStatus}>
-                                            <SelectTrigger>
+                                            <SelectTrigger className="p-4 w-full">
                                                 <SelectValue placeholder="All" />
                                             </SelectTrigger>
                                             <SelectContent>
@@ -208,12 +210,12 @@ export default function ManageTournaments({ auth, tournaments, filters }: PagePr
 
                                     {/* Filter Buttons */}
                                     <div className="flex items-center gap-2">
-                                        <Button onClick={handleFilter} className="bg-emerald-500 hover:bg-emerald-600">
+                                        <Button onClick={handleFilter} className="bg-emerald-500 hover:bg-emerald-600 p-4">
                                             <Filter className="h-4 w-4 mr-2" />
                                             Filter
                                         </Button>
                                         {hasFilters && (
-                                            <Button variant="outline" onClick={handleClearFilters}>
+                                            <Button variant="outline" onClick={handleClearFilters} className="p-4">
                                                 <X className="h-4 w-4 mr-2" />
                                                 Clear
                                             </Button>

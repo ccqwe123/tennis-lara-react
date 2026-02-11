@@ -365,12 +365,56 @@ export default function UsersIndex({ auth, users, stats, filters, userTypes }: P
                                     <div className="grid grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="create-password">Password</Label>
-                                            <Input id="create-password" type="password" value={createData.password} onChange={(e) => setCreateData('password', e.target.value)} required />
+                                            <div className="relative">
+                                                <Input
+                                                    id="create-password"
+                                                    type={showPassword ? "text" : "password"}
+                                                    value={createData.password}
+                                                    onChange={(e) => setCreateData('password', e.target.value)}
+                                                    autoComplete="new-password"
+                                                    required
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                                    onClick={() => setShowPassword(!showPassword)}
+                                                >
+                                                    {showPassword ? (
+                                                        <EyeOff className="h-4 w-4 text-gray-500" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4 text-gray-500" />
+                                                    )}
+                                                </Button>
+                                            </div>
                                             {errorsCreate.password && <span className="text-sm text-red-500">{errorsCreate.password}</span>}
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="create-password_confirmation">Confirm Password</Label>
-                                            <Input id="create-password_confirmation" type="password" value={createData.password_confirmation} onChange={(e) => setCreateData('password_confirmation', e.target.value)} required />
+                                            <div className="relative">
+                                                <Input
+                                                    id="create-password_confirmation"
+                                                    type={showConfirmPassword ? "text" : "password"}
+                                                    value={createData.password_confirmation}
+                                                    onChange={(e) => setCreateData('password_confirmation', e.target.value)}
+                                                    autoComplete="new-password"
+                                                    required
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                >
+                                                    {showConfirmPassword ? (
+                                                        <EyeOff className="h-4 w-4 text-gray-500" />
+                                                    ) : (
+                                                        <Eye className="h-4 w-4 text-gray-500" />
+                                                    )}
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                     <DialogFooter>

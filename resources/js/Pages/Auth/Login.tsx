@@ -1,4 +1,4 @@
-import { useEffect, FormEvent } from "react"
+import { useEffect, FormEvent, useState } from "react"
 import GuestLayout from "@/Layouts/GuestLayout"
 import { Head, Link, useForm } from "@inertiajs/react"
 import { cn } from "@/lib/utils"
@@ -8,7 +8,7 @@ import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
 import { Checkbox } from "@/Components/ui/checkbox"
 import { Alert, AlertDescription } from "@/Components/ui/alert"
-import { CheckCircle2, Loader2 } from "lucide-react"
+import { CheckCircle2, Eye, Loader2, EyeOff } from "lucide-react"
 
 interface LoginProps {
     status?: string
@@ -16,6 +16,7 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
+    const [showPassword, setShowPassword] = useState(false)
     const { data, setData, post, processing, errors, reset } = useForm({
         email: "",
         password: "",
@@ -66,7 +67,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                 required
                                 autoComplete="username"
                                 autoFocus
-                                className={cn(errors.email && "border-red-500")}
+                                className={cn(errors.email && "border-red-500", "p-5")}
                             />
                             {errors.email && (
                                 <p className="text-sm text-red-500">{errors.email}</p>
@@ -85,15 +86,30 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                                     </Link>
                                 )}
                             </div>
-                            <Input
-                                id="password"
-                                type="password"
-                                value={data.password}
-                                onChange={(e) => setData("password", e.target.value)}
-                                required
-                                autoComplete="current-password"
-                                className={cn(errors.password && "border-red-500")}
-                            />
+                            <div className="relative">
+                                <Input
+                                    id="password"
+                                    type={showPassword ? "text" : "password"}
+                                    value={data.password}
+                                    onChange={(e) => setData("password", e.target.value)}
+                                    autoComplete="current-password"
+                                    className={cn(errors.password && "border-red-500", "p-5")}
+                                    required
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    className="absolute right-0 top-0 h-full px-3 py-2 border-0  bg-transparent"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                >
+                                    {showPassword ? (
+                                        <EyeOff className="h-4 w-4 text-gray-500" />
+                                    ) : (
+                                        <Eye className="h-4 w-4 text-gray-500" />
+                                    )}
+                                </Button>
+                            </div>
                             {errors.password && (
                                 <p className="text-sm text-red-500">{errors.password}</p>
                             )}
@@ -112,7 +128,7 @@ export default function Login({ status, canResetPassword }: LoginProps) {
                             </Label>
                         </div>
 
-                        <Button type="submit" className="w-full" disabled={processing}>
+                        <Button type="submit" className="w-full p-5" disabled={processing}>
                             {processing && (
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             )}
