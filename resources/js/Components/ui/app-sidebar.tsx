@@ -69,7 +69,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
     return (
         <Sidebar collapsible="icon" {...props} className="border-r-0">
-            <SidebarHeader>
+            <div data-slot="sidebar-header" data-sidebar="header" className="flex flex-col gap-2 p-2">
+                <ul data-slot="sidebar-menu" data-sidebar="menu" className="flex w-full min-w-0 flex-col gap-1">
+                    <li data-slot="sidebar-menu-item" data-sidebar="menu-item" className="group/menu-item relative">
+                        <button data-slot="sidebar-menu-button" data-sidebar="menu-button" data-size="lg" data-active="false" className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left outline-hidden transition-[width,height,padding] active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pr-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! [&amp;&gt;span:last-child]:truncate [&amp;&gt;svg]:size-4 [&amp;&gt;svg]:shrink-0 h-12 text-sm group-data-[collapsible=icon]:p-0! ring-sidebar-primary/50 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground focus-visible:ring-1" type="button" id="radix-:R36tjb:" aria-haspopup="menu" aria-expanded="false" data-state="closed">
+                            <div className="text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                                <img alt="Shadcnblocks" loading="lazy" width="18" height="18" decoding="async" data-nimg="1" className="size-8" style={{ color: "transparent" }} src="/images/favicons/android-chrome-192x192.png" />
+                            </div>
+                            <div className="grid flex-1 text-left text-xs leading-tight">
+                                <span className="truncate font-semibold">{team.name}</span>
+                                <span className="truncate text-xs">{team.plan}</span>
+                            </div>
+                        </button>
+                    </li>
+                </ul>
+            </div>
+            {/* <SidebarHeader>
                 <div className="flex items-center gap-2 px-2 py-2">
                     <div className="flex aspect-square size-12 items-center justify-center rounded-lg overflow-hidden bg-transparent">
                         <img src="/images/favicons/android-chrome-192x192.png" alt="Tennis Club" className="size-12 object-contain" />
@@ -79,7 +94,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <span className="truncate text-xs">{team.plan}</span>
                     </div>
                 </div>
-            </SidebarHeader>
+            </SidebarHeader> */}
 
             <SidebarContent>
                 <NavMain items={filteredNavMain} />
