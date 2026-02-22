@@ -22,6 +22,8 @@ export default function Dashboard(props: any) {
                     <AdminDashboard
                         stats={props.stats}
                         chart_data={props.chart_data}
+                        pie_data={props.pie_data}
+                        revenue_chart={props.revenue_chart}
                         todays_players={props.todays_players}
                         filters={props.filters}
                     />

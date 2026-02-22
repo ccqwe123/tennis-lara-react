@@ -68,13 +68,32 @@ class DashboardController extends Controller
     private function adminDashboard()
     {
         $today = Carbon::today();
+        $pieFilter = request('pie_filter', 'today');
         $startOfMonth = Carbon::now()->subDays(30);
 
         // Stats
-        $dailyBookings = CourtBooking::whereDate('booking_date', $today)->count();
-        $dailyPaid = CourtBooking::whereDate('booking_date', $today)->where('payment_status', 'paid')->count();
-        $dailyUnpaid = CourtBooking::whereDate('booking_date', $today)->where('payment_status', 'pending')->count();
-        $totalMembers = User::where('type', 'member')->count();
+        $dailyBookings = CourtBooking::query();
+        if ($pieFilter === 'today') {
+            $dailyBookings->whereDate('booking_date', $today);
+        }
+        $dailyBookings = $dailyBookings->count();
+
+        $dailyPaid = CourtBooking::query();
+        if ($pieFilter === 'today') {
+            $dailyPaid->whereDate('booking_date', $today);
+        }
+        $dailyPaid = $dailyPaid->where('payment_status', 'paid')->count();
+
+        $dailyUnpaid = CourtBooking::query();
+        if ($pieFilter === 'today') {
+            $dailyUnpaid->whereDate('booking_date', $today);
+        }
+        $dailyUnpaid = $dailyUnpaid->where('payment_status', 'pending')->count();
+        $totalMembers = User::query();
+        if ($pieFilter === 'today') {
+            $totalMembers->whereDate('created_at', $today);
+        }
+        $totalMembers = $totalMembers->where('type', 'member')->count();
 
         // Chart Data (Last 30 Days Bookings)
         $chartData = CourtBooking::selectRaw('DATE(booking_date) as date, COUNT(*) as count')
@@ -93,8 +112,11 @@ class DashboardController extends Controller
         $playerType = request('player_type', 'all');
 
         $playersQuery = CourtBooking::with('user')
-            ->whereDate('booking_date', $today)
+            // ->whereDate('booking_date', $today)
             ->orderBy('created_at', 'asc');
+        if ($pieFilter === 'today') {
+            $playersQuery->whereDate('booking_date', $today);
+        }
 
         if ($playerType !== 'all') {
             if ($playerType === 'guest') {
@@ -120,6 +142,65 @@ class DashboardController extends Controller
                 ];
             });
 
+        // Pie Chart Data
+        $pieQuery = CourtBooking::with('user');
+        if ($pieFilter === 'today') {
+            $pieQuery->whereDate('booking_date', $today);
+        }
+
+        $pieBookings = $pieQuery->get();
+        $memberCount = $pieBookings->filter(fn($b) => $b->user_type_at_booking === 'member')->count();
+        $nonMemberCount = $pieBookings->filter(fn($b) => $b->user_type_at_booking === 'non-member')->count();
+        $guestCount = $pieBookings->filter(fn($b) => $b->user == null)->count();
+        $studentCount = $pieBookings->filter(fn($b) => $b->user_type_at_booking === 'student')->count();
+
+        // Revenue vs Expenses Chart (last 30 days)
+        // Revenue: paid court bookings per day
+        $bookingRevenue = CourtBooking::selectRaw('DATE(booking_date) as date, SUM(total_amount) as total')
+            ->where('payment_status', 'paid')
+            ->where('booking_date', '>=', $startOfMonth)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        // Revenue: paid memberships per day
+        $membershipRevenue = \App\Models\MemberSubscription::selectRaw('DATE(created_at) as date, SUM(amount_paid) as total')
+            ->where('payment_status', 'paid')
+            ->where('created_at', '>=', $startOfMonth)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        // Expenses per day
+        $expenseData = \App\Models\Expense::selectRaw('DATE(date) as date, SUM(amount) as total')
+            ->where('date', '>=', $startOfMonth)
+            ->groupBy('date')
+            ->orderBy('date')
+            ->get()
+            ->keyBy('date');
+
+        // Merge all dates across revenue + expenses into one series
+        $allDates = collect()
+            ->merge($bookingRevenue->keys())
+            ->merge($membershipRevenue->keys())
+            ->merge($expenseData->keys())
+            ->unique()
+            ->sort()
+            ->values();
+
+        $revenueChart = $allDates->map(function ($date) use ($bookingRevenue, $membershipRevenue, $expenseData) {
+            $bookings = (float) ($bookingRevenue->get($date)->total ?? 0);
+            $memberships = (float) ($membershipRevenue->get($date)->total ?? 0);
+            $expenses = (float) ($expenseData->get($date)->total ?? 0);
+            return [
+                'date' => Carbon::parse($date)->format('M d'),
+                'revenue' => round($bookings + $memberships, 2),
+                'expenses' => round($expenses, 2),
+            ];
+        })->values();
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'daily_bookings' => $dailyBookings,
@@ -131,7 +212,15 @@ class DashboardController extends Controller
             'todays_players' => $todaysBookings,
             'filters' => [
                 'player_type' => $playerType,
+                'pie_filter' => $pieFilter,
             ],
+            'pie_data' => [
+                ['name' => 'Member', 'value' => $memberCount],
+                ['name' => 'Non-Member', 'value' => $nonMemberCount],
+                ['name' => 'Guest', 'value' => $guestCount],
+                ['name' => 'Student', 'value' => $studentCount],
+            ],
+            'revenue_chart' => $revenueChart,
         ]);
     }
 
