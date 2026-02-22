@@ -1,7 +1,8 @@
 import { router } from "@inertiajs/react"
+import React from 'react';
 import {
-    BadgeCheck,
-    Bell,
+    Key,
+    Activity,
     ChevronsUpDown,
     LogOut,
     User as UserIcon,
@@ -41,13 +42,18 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
         router.post('/logout')
     }
 
+    const avatarUrl = user.avatar ? `/storage/${user.avatar}` : null;
+
     return (
         <DropdownMenu modal={false}>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0 md:h-auto md:w-auto md:justify-start md:px-2 md:py-1.5 md:rounded-md hover:bg-transparent md:hover:bg-accent md:hover:text-accent-foreground">
                     <div className="flex items-center gap-2">
+                        {/* <Avatar className="h-8 w-8 rounded-full border border-gray-200">
+                            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+                        </Avatar> */}
                         <Avatar className="h-8 w-8 rounded-full border border-gray-200">
-                            {/* <AvatarImage src={user.avatar} alt={user.name} /> */}
+                            <AvatarImage src={avatarUrl || ''} />
                             <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
                         </Avatar>
                         <div className="hidden md:grid flex-1 text-left text-sm leading-tight">
@@ -69,17 +75,17 @@ export function HeaderUserMenu({ user }: HeaderUserMenuProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => router.get('/profile')}>
                         <UserIcon className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <BadgeCheck className="mr-2 h-4 w-4" />
-                        <span>Billing</span>
+                    <DropdownMenuItem onClick={() => router.get('/change-password')}>
+                        <Key className="mr-2 h-4 w-4" />
+                        <span>Change Password</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
-                        <Bell className="mr-2 h-4 w-4" />
-                        <span>Notifications</span>
+                    <DropdownMenuItem onClick={() => router.get('/activity-logs')}>
+                        <Activity className="mr-2 h-4 w-4" />
+                        <span>Activity Logs</span>
                     </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />

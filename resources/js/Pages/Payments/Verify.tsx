@@ -1,14 +1,12 @@
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { Head, router, usePage } from "@inertiajs/react"
+import { Head, router } from "@inertiajs/react"
 import { useState } from "react"
 import { format } from "date-fns"
-import { Calendar as CalendarIcon, Check, CreditCard, Filter, Loader2, Search } from "lucide-react"
+import { Calendar as CalendarIcon, Check, Filter, Loader2 } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/Components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
-import { Input } from "@/Components/ui/input"
-import { Badge } from "@/Components/ui/badge"
 import { StatusBadge } from "@/Components/StatusBadge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs"
 import {

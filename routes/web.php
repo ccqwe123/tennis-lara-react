@@ -25,6 +25,8 @@ Route::get('/dashboard', [App\Http\Controllers\DashboardController::class, 'inde
 Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
 Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
 Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+Route::get('/change-password', [ProfileController::class, 'editPassword'])->middleware('auth')->name('profile.password.edit');
+Route::get('/activity-logs', [App\Http\Controllers\ActivityLogController::class, 'index'])->middleware('auth')->name('activity-logs');
 
 // Notifications
 Route::get('/notifications', [App\Http\Controllers\NotificationController::class, 'index'])->name('notifications.index');

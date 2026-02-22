@@ -84,17 +84,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </li>
                 </ul>
             </div>
-            {/* <SidebarHeader>
-                <div className="flex items-center gap-2 px-2 py-2">
-                    <div className="flex aspect-square size-12 items-center justify-center rounded-lg overflow-hidden bg-transparent">
-                        <img src="/images/favicons/android-chrome-192x192.png" alt="Tennis Club" className="size-12 object-contain" />
-                    </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">{team.name}</span>
-                        <span className="truncate text-xs">{team.plan}</span>
-                    </div>
-                </div>
-            </SidebarHeader> */}
 
             <SidebarContent>
                 <NavMain items={filteredNavMain} />
@@ -103,9 +92,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 )}
             </SidebarContent>
 
-            <SidebarFooter>
+            {/* hide if navbar is collapsed or not expanded (only show when expanded) */}
+            <SidebarFooter
+                className="group-data-[collapsible=icon]:hidden"
+            >
                 <div className="p-4 text-xs text-center text-muted-foreground">
-                    v1.0.0
+                    TTC - All rights reserved © {new Date().getFullYear()}
                 </div>
             </SidebarFooter>
             <SidebarRail />
