@@ -1,6 +1,6 @@
 import { Head, router } from "@inertiajs/react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
-import { Calendar, CreditCard, Users, DollarSign } from "lucide-react"
+import { Calendar, CreditCard, Users, DollarSign, CalendarPlus, Trophy, Coins, TicketPlus } from "lucide-react"
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend, LineChart, Line, CartesianGrid } from "recharts"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs"
 import { Badge } from "@/Components/ui/badge"
@@ -161,7 +161,7 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
                     </CardContent>
                 </Card>
 
-                <Card className="col-span-3 h-full flex flex-col">
+                <Card className="col-span-4 md:col-span-3 h-full flex flex-col">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
@@ -232,108 +232,136 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
                 </Card>
             </div>
             {/* Quick Actions & Player List */}
-            <Card className="col-span-3 h-full flex flex-col">
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Today's Players</CardTitle>
-                            <CardDescription>List of players booked for today</CardDescription>
-                        </div>
-                    </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col">
-                    <Tabs defaultValue={filters.player_type || "all"} className="w-full" onValueChange={handleTabChange}>
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="all">All</TabsTrigger>
-                            <TabsTrigger value="member">Mem</TabsTrigger>
-                            <TabsTrigger value="non-member">Non</TabsTrigger>
-                            <TabsTrigger value="guest">Guest</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value={filters.player_type || "all"} className="mt-4 flex-1">
-                            <div className="space-y-4">
-                                {todays_players.data.length > 0 ? (
-                                    todays_players.data.map((player) => (
-                                        <div key={player.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
-                                            <div>
-                                                <p className="font-medium text-sm">{player.user_name}</p>
-                                                <p className="text-xs text-muted-foreground">{player.time} - {player.court}</p>
-                                            </div>
-                                            <Badge variant={player.status === 'paid' ? 'default' : 'secondary'} className={player.status === 'paid' ? "bg-emerald-500 hover:bg-emerald-600" : ""}>
-                                                {player.status}
-                                            </Badge>
-                                        </div>
-                                    ))
-                                ) : (
-                                    <p className="text-sm text-gray-500 text-center py-4">No players found.</p>
-                                )}
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+                <Card className="col-span-5 h-full">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Today's Players</CardTitle>
+                                <CardDescription>List of players booked for today</CardDescription>
                             </div>
-                        </TabsContent>
-                    </Tabs>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col">
+                        <Tabs defaultValue={filters.player_type || "all"} className="w-full" onValueChange={handleTabChange}>
+                            <TabsList className="grid w-full grid-cols-4">
+                                <TabsTrigger value="all">All</TabsTrigger>
+                                <TabsTrigger value="member">Mem</TabsTrigger>
+                                <TabsTrigger value="non-member">Non</TabsTrigger>
+                                <TabsTrigger value="guest">Guest</TabsTrigger>
+                            </TabsList>
+                            <TabsContent value={filters.player_type || "all"} className="mt-4 flex-1">
+                                <div className="space-y-4">
+                                    {todays_players.data.length > 0 ? (
+                                        todays_players.data.map((player) => (
+                                            <div key={player.id} className="flex items-center justify-between border-b pb-2 last:border-0 last:pb-0">
+                                                <div>
+                                                    <p className="font-medium text-sm">{player.user_name}</p>
+                                                    <p className="text-xs text-muted-foreground">{player.time} - {player.court}</p>
+                                                </div>
+                                                <Badge variant={player.status === 'paid' ? 'default' : 'secondary'} className={player.status === 'paid' ? "bg-emerald-500 hover:bg-emerald-600" : ""}>
+                                                    {player.status}
+                                                </Badge>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <p className="text-sm text-gray-500 text-center py-4">No players found.</p>
+                                    )}
+                                </div>
+                            </TabsContent>
+                        </Tabs>
 
-                    {/* Pagination */}
-                    <div className="mt-auto pt-4">
-                        {todays_players.last_page > 1 && (
-                            <Pagination className="w-auto mx-0 justify-end">
-                                <PaginationContent>
-                                    <PaginationItem>
-                                        <PaginationPrevious
-                                            href={todays_players.links[0].url || '#'}
-                                            isActive={!todays_players.links[0].url}
-                                            className={!todays_players.links[0].url ? 'pointer-events-none opacity-50' : ''}
-                                            preserveState
-                                            preserveScroll
-                                        />
-                                    </PaginationItem>
+                        {/* Pagination */}
+                        <div className="mt-auto pt-4">
+                            {todays_players.last_page > 1 && (
+                                <Pagination className="w-auto mx-0 justify-end">
+                                    <PaginationContent>
+                                        <PaginationItem>
+                                            <PaginationPrevious
+                                                href={todays_players.links[0].url || '#'}
+                                                isActive={!todays_players.links[0].url}
+                                                className={!todays_players.links[0].url ? 'pointer-events-none opacity-50' : ''}
+                                                preserveState
+                                                preserveScroll
+                                            />
+                                        </PaginationItem>
 
-                                    {todays_players.links.slice(1, -1).map((link, i) => {
-                                        if (link.label === '...') {
+                                        {todays_players.links.slice(1, -1).map((link, i) => {
+                                            if (link.label === '...') {
+                                                return (
+                                                    <PaginationItem key={i}>
+                                                        <PaginationEllipsis />
+                                                    </PaginationItem>
+                                                )
+                                            }
                                             return (
                                                 <PaginationItem key={i}>
-                                                    <PaginationEllipsis />
+                                                    <PaginationLink
+                                                        href={link.url || '#'}
+                                                        isActive={link.active}
+                                                        preserveState
+                                                        preserveScroll
+                                                    >
+                                                        <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
+                                                    </PaginationLink>
                                                 </PaginationItem>
                                             )
-                                        }
-                                        return (
-                                            <PaginationItem key={i}>
-                                                <PaginationLink
-                                                    href={link.url || '#'}
-                                                    isActive={link.active}
-                                                    preserveState
-                                                    preserveScroll
-                                                >
-                                                    <span dangerouslySetInnerHTML={{ __html: link.label }}></span>
-                                                </PaginationLink>
-                                            </PaginationItem>
-                                        )
-                                    })}
+                                        })}
 
-                                    <PaginationItem>
-                                        <PaginationNext
-                                            href={todays_players.links[todays_players.links.length - 1].url || '#'}
-                                            isActive={!todays_players.links[todays_players.links.length - 1].url}
-                                            className={!todays_players.links[todays_players.links.length - 1].url ? 'pointer-events-none opacity-50' : ''}
-                                            preserveState
-                                            preserveScroll
-                                        />
-                                    </PaginationItem>
-                                </PaginationContent>
-                            </Pagination>
-                        )}
-                    </div>
-
-                    <div className="mt-6 pt-6 border-t">
-                        <h4 className="text-sm font-semibold mb-3">Quick Actions</h4>
-                        <div className="grid grid-cols-2 gap-2">
-                            <a href="/bookings/create" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
-                                New Booking
-                            </a>
-                            <a href="/tournaments/create" className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input bg-background hover:bg-accent hover:text-accent-foreground h-9 px-4 py-2">
-                                Add Tournament
-                            </a>
+                                        <PaginationItem>
+                                            <PaginationNext
+                                                href={todays_players.links[todays_players.links.length - 1].url || '#'}
+                                                isActive={!todays_players.links[todays_players.links.length - 1].url}
+                                                className={!todays_players.links[todays_players.links.length - 1].url ? 'pointer-events-none opacity-50' : ''}
+                                                preserveState
+                                                preserveScroll
+                                            />
+                                        </PaginationItem>
+                                    </PaginationContent>
+                                </Pagination>
+                            )}
                         </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+                <Card className="col-span-5 md:col-span-2 h-full flex flex-col">
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle>Quick Actions</CardTitle>
+                                <CardDescription>
+                                    Perform quick actions
+                                </CardDescription>
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="mt-6 pt-6 border-t">
+                            <div className="grid grid-cols-1 gap-2">
+                                <a href="/bookings/create" className="bg-primary text-white h-12 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                    <CalendarPlus className="mr-2 h-4 w-4" />
+                                    New Booking
+                                </a>
+                                <a href="/tournaments/create" className="bg-yellow-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                    <Trophy className="mr-2 h-4 w-4" />
+                                    Add Tournament
+                                </a>
+                                <a href="/payments/verify" className="bg-blue-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                    <Coins className="mr-2 h-4 w-4" />
+                                    Verify Payments
+                                </a>
+                                <a href="/memberships/create" className="bg-red-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                    <TicketPlus className="mr-2 h-4 w-4" />
+                                    Add Memberships
+                                </a>
+                                <a href="/users" className="bg-black h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    User List
+                                </a>
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
 
             {/* Revenue vs Expenses Chart */}
             <Card>
