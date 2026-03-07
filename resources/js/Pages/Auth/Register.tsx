@@ -2,7 +2,7 @@ import { useEffect, FormEvent } from "react"
 import GuestLayout from "@/Layouts/GuestLayout"
 import { Head, Link, useForm } from "@inertiajs/react"
 import { cn } from "@/lib/utils"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
@@ -11,7 +11,7 @@ import { Loader2 } from "lucide-react"
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: "",
-        email: "",
+        username: "",
         phone: "",
         password: "",
         password_confirmation: "",
@@ -59,19 +59,19 @@ export default function Register() {
                         </div>
 
                         <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
+                            <Label htmlFor="username">Username</Label>
                             <Input
-                                id="email"
-                                type="email"
-                                name="email"
-                                value={data.email}
-                                onChange={(e) => setData("email", e.target.value)}
+                                id="username"
+                                type="text"
+                                name="username"
+                                value={data.username}
+                                onChange={(e) => setData("username", e.target.value)}
                                 required
                                 autoComplete="username"
-                                className={cn(errors.email && "border-red-500")}
+                                className={cn(errors.username && "border-red-500")}
                             />
-                            {errors.email && (
-                                <p className="text-sm text-red-500">{errors.email}</p>
+                            {errors.username && (
+                                <p className="text-sm text-red-500">{errors.username}</p>
                             )}
                         </div>
 

@@ -1,5 +1,5 @@
 import { Bell, Check } from "lucide-react"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import {
     DropdownMenu,
     DropdownMenuContent,

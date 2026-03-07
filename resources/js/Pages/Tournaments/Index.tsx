@@ -12,7 +12,7 @@ import {
     CardTitle,
 } from "@/Components/ui/card"
 import { Badge } from "@/Components/ui/badge"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 
 interface Tournament {
     id: number

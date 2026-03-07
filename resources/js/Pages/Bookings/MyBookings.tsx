@@ -3,7 +3,7 @@ import { router } from "@inertiajs/react"
 import { Calendar, Clock, Sun, Moon, Banknote, CreditCard, ChevronLeft, ChevronRight, Download, Copy, Check } from "lucide-react"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Badge } from "@/Components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import {

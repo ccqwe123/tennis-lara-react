@@ -94,4 +94,16 @@ Route::get('/reports/tournaments/export', [App\Http\Controllers\ReportsControlle
 Route::get('/reports/tournaments/{tournament}/participants', [App\Http\Controllers\ReportsController::class, 'tournamentParticipants'])->name('reports.tournaments.participants');
 Route::get('/reports/tournaments/{tournament}/participants/export', [App\Http\Controllers\ReportsController::class, 'exportTournamentParticipants'])->name('reports.tournaments.participants.export');
 
+// User Guide
+Route::middleware(['auth'])->group(function () {
+    Route::get('/user-guide', [App\Http\Controllers\UserGuideController::class, 'index'])->name('user-guide.index');
+
+    Route::middleware(['auth'])->group(function () {
+        Route::post('/user-guide', [App\Http\Controllers\UserGuideController::class, 'store'])->name('user-guide.store');
+        Route::patch('/user-guide/{userGuide}', [App\Http\Controllers\UserGuideController::class, 'update'])->name('user-guide.update');
+        Route::delete('/user-guide/{userGuide}', [App\Http\Controllers\UserGuideController::class, 'destroy'])->name('user-guide.destroy');
+        Route::post('/user-guide/reorder', [App\Http\Controllers\UserGuideController::class, 'reorder'])->name('user-guide.reorder');
+    });
+});
+
 require __DIR__ . '/auth.php';

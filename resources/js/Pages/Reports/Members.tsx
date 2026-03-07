@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 
 declare var route: any;
 
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import ApplicationLogo from "@/Components/ApplicationLogo"
 import {
     Card,

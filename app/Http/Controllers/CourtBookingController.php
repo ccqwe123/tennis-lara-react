@@ -169,6 +169,7 @@ class CourtBookingController extends Controller
             return [
                 'id' => $user->id,
                 'name' => $user->name,
+                'username' => $user->username,
                 'type' => $user->type,
                 'membership_status' => $user->membership_status,
                 'player_level' => $user->player_level,

@@ -125,6 +125,12 @@ export const navMain: NavItem[] = [
             { title: "Activity Logs", url: "/settings/activity-logs", roles: ['admin'] },
         ],
     },
+    {
+        title: "User Guide",
+        url: "/user-guide",
+        icon: BookOpen,
+        roles: ['admin', 'staff', 'member', 'non-member', 'student'],
+    },
 ]
 
 // Quick access projects/actions

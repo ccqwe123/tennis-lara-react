@@ -6,7 +6,7 @@ import { Slot } from "@radix-ui/react-slot"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Input } from "@/Components/ui/input"
 import { Separator } from "@/Components/ui/separator"
 import {

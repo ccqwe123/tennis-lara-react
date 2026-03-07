@@ -5,7 +5,7 @@ import { Head, useForm, router } from "@inertiajs/react"
 import { toast } from "sonner"
 import { Check, Banknote, CreditCard, ChevronsUpDown, User as UserIcon, ArrowLeft } from "lucide-react"
 
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import {
     Form,
     FormControl,

@@ -3,7 +3,7 @@ import { Head, router } from "@inertiajs/react"
 import { Search, Calendar, Filter, Trophy, ChevronLeft, ChevronRight, X, Eye, Users, Pencil } from "lucide-react"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Input } from "@/Components/ui/input"
 import { Badge } from "@/Components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"

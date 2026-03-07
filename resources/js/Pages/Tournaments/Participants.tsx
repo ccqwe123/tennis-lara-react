@@ -4,7 +4,7 @@ import { ArrowLeft, Users, CreditCard, Trash2, CheckCircle, XCircle, Check } fro
 import { toast } from "sonner"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Badge } from "@/Components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
 import {

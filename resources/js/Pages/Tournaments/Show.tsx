@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { Calendar, CheckCircle2, ChevronLeft, Trophy, Pencil, Check, Copy, Download, Banknote, CreditCard, Lock, AlertCircle } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import { Badge } from "@/Components/ui/badge"
 import {

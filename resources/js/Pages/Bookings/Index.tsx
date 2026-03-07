@@ -8,7 +8,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 declare var route: any;
 
 import { Input } from "@/Components/ui/input"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Badge } from "@/Components/ui/badge"
 import { StatusBadge } from "@/Components/StatusBadge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"

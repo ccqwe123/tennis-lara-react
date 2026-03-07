@@ -16,7 +16,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/Components/ui/pagination"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Input } from "@/Components/ui/input"
 import {
     Dialog,

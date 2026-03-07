@@ -3,7 +3,7 @@ export type UserType = 'admin' | 'staff' | 'member' | 'non-member' | 'student';
 export interface User {
     id: number;
     name: string;
-    email: string;
+    username: string;
     type: UserType;
     avatar?: string;
     phone?: string;

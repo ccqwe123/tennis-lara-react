@@ -9,7 +9,7 @@ import { toast } from "sonner"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { cn } from "@/lib/utils"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Input } from "@/Components/ui/input"
 import { Calendar } from "@/Components/ui/calendar"
 import {
@@ -54,7 +54,7 @@ interface PageProps {
     users: {
         id: number
         name: string
-        email: string
+        username: string
         type: string
         membership_status: string
         player_level: string | null
@@ -264,7 +264,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                                                                     <div className="flex items-center justify-between w-full" >
                                                                                                         <div className="flex flex-col" >
                                                                                                             <span className="font-medium text-base" > {user.name} </span>
-                                                                                                            <span className="text-sm text-muted-foreground" > {user.email} </span>
+                                                                                                            <span className="text-sm text-muted-foreground" > {user.username} </span>
                                                                                                         </div>
                                                                                                         <Badge variant={user.membership_status === 'member' ? 'default' : 'secondary'} className={user.membership_status === 'member' ? 'bg-emerald-500' : ''} >
                                                                                                             {user.membership_status}

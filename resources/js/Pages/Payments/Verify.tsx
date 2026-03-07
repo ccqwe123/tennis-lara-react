@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon, Check, Filter, Loader2, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
 import { StatusBadge } from "@/Components/StatusBadge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs"

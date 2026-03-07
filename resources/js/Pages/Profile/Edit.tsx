@@ -2,7 +2,7 @@ import React, { useRef, useState } from 'react';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, useForm, usePage } from '@inertiajs/react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card";
-import { Button } from "@/Components/ui/button";
+import { ButtonCustom as Button } from "@/Components/ui/button-custom";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
@@ -13,7 +13,7 @@ import { toast } from "sonner"
 interface User {
     id: number;
     name: string;
-    email: string;
+    username: string;
     phone: string | null;
     avatar: string | null;
     email_verified_at: string | null;
@@ -23,12 +23,13 @@ interface PageProps {
     auth: {
         user: User;
     };
+    user: User;
     mustVerifyEmail: boolean;
     status?: string;
+    [key: string]: unknown;
 }
 
-export default function Edit({ mustVerifyEmail, status }: PageProps) {
-    const user = usePage<PageProps>().props.auth.user;
+export default function Edit({ user, status }: PageProps) {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [previewUrl, setPreviewUrl] = useState<string | null>(
         user.avatar ? `/storage/${user.avatar}` : null
@@ -36,7 +37,7 @@ export default function Edit({ mustVerifyEmail, status }: PageProps) {
 
     const { data, setData, post, errors, processing, recentlySuccessful } = useForm({
         name: user.name,
-        email: user.email,
+        username: user.username,
         phone: user.phone || '',
         avatar: null as File | null,
         _method: 'patch',
@@ -147,20 +148,21 @@ export default function Edit({ mustVerifyEmail, status }: PageProps) {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="email" className="flex items-center gap-2">
+                                        <Label htmlFor="username" className="flex items-center gap-2">
                                             <Mail className="h-4 w-4 text-emerald-600" />
-                                            Email Address
+                                            Username
                                         </Label>
                                         <Input
-                                            id="email"
-                                            type="email"
-                                            value={data.email}
-                                            onChange={(e) => setData('email', e.target.value)}
+                                            id="username"
+                                            type="text"
+                                            disabled
+                                            value={data.username}
+                                            onChange={(e) => setData('username', e.target.value)}
                                             className="focus-visible:ring-emerald-500 py-5 px-2"
-                                            placeholder="you@example.com"
+                                            placeholder="Enter your username"
                                             required
                                         />
-                                        {errors.email && <p className="text-sm text-red-600 mt-1">{errors.email}</p>}
+                                        {errors.username && <p className="text-sm text-red-600 mt-1">{errors.username}</p>}
                                     </div>
 
                                     <div className="space-y-2">

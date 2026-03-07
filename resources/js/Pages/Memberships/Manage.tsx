@@ -4,7 +4,7 @@ import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Search, Plus, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button } from "@/Components/ui/button"
+import { ButtonCustom as Button } from "@/Components/ui/button-custom"
 import {
     Card,
     CardContent,
