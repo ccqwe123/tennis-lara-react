@@ -10,7 +10,7 @@ import {
     TableRow,
 } from "@/Components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Badge } from "@/Components/ui/badge"
 import {

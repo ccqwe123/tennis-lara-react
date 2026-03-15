@@ -4,13 +4,13 @@ import * as React from "react"
 import { Combobox as ComboboxPrimitive } from "@base-ui/react"
 
 import { cn } from "@/lib/utils"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { ButtonCombo } from "@/Components/ui/button-combo"
 import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupButton,
-  InputGroupInput,
-} from "@/Components/ui/input-group"
+  InputGroupCombo,
+  InputGroupComboAddon,
+  InputGroupComboButton,
+  InputGroupComboInput,
+} from "@/Components/ui/input-group-combo"
 import { ChevronDownIcon, XIcon, CheckIcon } from "lucide-react"
 
 const Combobox = ComboboxPrimitive.Root
@@ -40,7 +40,7 @@ function ComboboxClear({ className, ...props }: ComboboxPrimitive.Clear.Props) {
   return (
     <ComboboxPrimitive.Clear
       data-slot="combobox-clear"
-      render={<InputGroupButton variant="ghost" size="icon-xs" />}
+      render={<InputGroupComboButton variant="ghost" size="icon-xs" />}
       className={cn(className)}
       {...props}
     >
@@ -61,14 +61,14 @@ function ComboboxInput({
   showClear?: boolean
 }) {
   return (
-    <InputGroup className={cn("w-auto", className)}>
+    <InputGroupCombo className={cn("w-auto", className)}>
       <ComboboxPrimitive.Input
-        render={<InputGroupInput disabled={disabled} />}
+        render={<InputGroupComboInput disabled={disabled} />}
         {...props}
       />
-      <InputGroupAddon align="inline-end">
+      <InputGroupComboAddon align="inline-end">
         {showTrigger && (
-          <InputGroupButton
+          <InputGroupComboButton
             size="icon-xs"
             variant="ghost"
             asChild
@@ -77,12 +77,12 @@ function ComboboxInput({
             disabled={disabled}
           >
             <ComboboxTrigger />
-          </InputGroupButton>
+          </InputGroupComboButton>
         )}
         {showClear && <ComboboxClear disabled={disabled} />}
-      </InputGroupAddon>
+      </InputGroupComboAddon>
       {children}
-    </InputGroup>
+    </InputGroupCombo>
   )
 }
 
@@ -251,7 +251,7 @@ function ComboboxChip({
       {children}
       {showRemove && (
         <ComboboxPrimitive.ChipRemove
-          render={<Button variant="ghost" size="icon-xs" />}
+          render={<ButtonCombo variant="ghost" size="icon-xs" />}
           className="-ml-1 opacity-50 hover:opacity-100"
           data-slot="combobox-chip-remove"
         >

@@ -5,7 +5,7 @@ import { Head, useForm, router } from "@inertiajs/react"
 import { toast } from "sonner"
 import { Check, Banknote, CreditCard, ChevronsUpDown, User as UserIcon, ArrowLeft } from "lucide-react"
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import {
     Form,
     FormControl,
@@ -195,7 +195,8 @@ export default function MembershipCreate({ auth, fees, users }: PageProps) {
                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                             </Button>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[calc(100vw-3rem)] sm:w-[500px] md:w-[600px] p-0" align="start">
+                                        <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
+                                        {/* <PopoverContent className="w-[calc(100vw-3rem)] sm:w-[500px] md:w-[600px] p-0" align="start"> */}
                                             <Command shouldFilter={false}>
                                                 <CommandInput
                                                     placeholder="Search name or email..."

@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 
+use App\Models\Setting;
 use App\Models\Tournament;
+use App\Models\TournamentCourtBooking;
 use App\Models\TournamentRegistration;
 use Inertia\Inertia;
 
@@ -85,6 +87,7 @@ class TournamentController extends Controller
         return Inertia::render('Tournaments/Show', [
             'tournament' => $tournament,
             'myRegistration' => $tournament->registrations()->where('user_id', auth()->id())->first(),
+            'myCourtBookingsCount' => $tournament->courtBookings()->where('user_id', auth()->id())->count(),
             'gcashQrCode' => $gcashQrCode ? \Illuminate\Support\Facades\Storage::url($gcashQrCode) : null,
         ]);
     }
@@ -268,6 +271,246 @@ class TournamentController extends Controller
         ]);
 
         return back()->with('success', 'Participant marked as paid successfully!');
+    }
+
+    public function bookCourt(Tournament $tournament)
+    {
+        $user = auth()->user();
+        $isStaff = $user->isStaff();
+        $isAdmin = $user->isAdmin();
+
+        if (!$isStaff && !$isAdmin) {
+            $registration = TournamentRegistration::where('tournament_id', $tournament->id)
+                ->where('user_id', $user->id)
+                ->where('payment_status', 'paid')
+                ->first();
+
+            if (!$registration) {
+                abort(403, 'You must have a paid registration in this tournament to book a court.');
+            }
+        }
+
+        $settings = Setting::all()->pluck('value', 'key');
+        $gcashQrCode = Setting::where('key', 'gcash_qr_code')->first()?->value;
+        $users = $isStaff || $isAdmin
+            ? \App\Models\User::all()->map(fn($u) => [
+                'id' => $u->id,
+                'name' => $u->name,
+                'username' => $u->username,
+                'type' => $u->type,
+                'membership_status' => $u->membership_status,
+            ])
+            : [];
+
+        return Inertia::render('Tournaments/BookCourt', [
+            'tournament' => [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+                'start_date' => $tournament->start_date->format('Y-m-d'),
+                'end_date' => $tournament->end_date->format('Y-m-d'),
+            ],
+            'settings' => $settings,
+            'gcashQrCode' => $gcashQrCode ? \Illuminate\Support\Facades\Storage::url($gcashQrCode) : null,
+            'isStaff' => $isStaff,
+            'isAdmin' => $isAdmin,
+            'users' => $users,
+        ]);
+    }
+
+    public function storeCourtBooking(Request $request, Tournament $tournament)
+    {
+        $user = auth()->user();
+        $isStaff = $user->isStaff();
+        $isAdmin = $user->isAdmin();
+
+        if (!$isStaff && !$isAdmin) {
+            $registration = TournamentRegistration::where('tournament_id', $tournament->id)
+                ->where('user_id', $user->id)
+                ->where('payment_status', 'paid')
+                ->first();
+
+            if (!$registration) {
+                abort(403, 'You must have a paid registration in this tournament to book a court.');
+            }
+        }
+
+        $request->validate([
+            'schedule_type' => 'required|in:day,night',
+            'games_count' => 'required|integer|min:1|max:4',
+            'with_trainer' => 'boolean',
+            'payment_method' => 'required|in:cash,gcash',
+            'is_guest' => 'boolean',
+            'guest_name' => 'required_if:is_guest,true|nullable|string|max:255',
+            'user_id' => ($isStaff || $isAdmin) ? 'nullable|exists:users,id' : 'nullable',
+        ]);
+
+        $settings = Setting::all()->pluck('value', 'key');
+
+        $isGuest = $request->boolean('is_guest');
+        $userId = $isStaff || $isAdmin
+            ? ($isGuest ? null : ($request->user_id ?? null))
+            : $user->id;
+
+        $userType = 'non-member';
+        if (!$isGuest && $userId) {
+            $bookedUser = \App\Models\User::find($userId);
+            if ($bookedUser) $userType = $bookedUser->type->value;
+        }
+
+        if ($userType === 'member') {
+            $rate = $request->schedule_type === 'day' ? 75 : 85;
+        } elseif ($userType === 'student') {
+            $rate = 45;
+        } else {
+            $rate = 150;
+        }
+
+        $trainerFee = $request->with_trainer ? (float) ($settings['fee_trainer'] ?? 0) : 0;
+        $total = ($rate * $request->games_count) + ($trainerFee * $request->games_count);
+
+        $booking = TournamentCourtBooking::create([
+            'tournament_id' => $tournament->id,
+            'user_id' => $userId,
+            'staff_id' => ($isStaff || $isAdmin) ? $user->id : null,
+            'guest_name' => $isGuest ? $request->guest_name : null,
+            'schedule_type' => $request->schedule_type,
+            'booking_date' => now('Asia/Manila')->toDateString(),
+            'games_count' => $request->games_count,
+            'with_trainer' => $request->with_trainer ?? false,
+            'payment_method' => $request->payment_method,
+            'payment_reference' => 'TCB-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8)),
+            'payment_status' => 'pending',
+            'total_amount' => $total,
+            'user_type_at_booking' => $userType,
+        ]);
+
+        \App\Services\ActivityLogger::log('tournament_court_booking', "Court booked for tournament: {$tournament->name}", $booking);
+
+        $adminsAndStaff = \App\Models\User::whereIn('type', ['admin', 'staff'])->get();
+        \Illuminate\Support\Facades\Notification::send($adminsAndStaff, new \App\Notifications\NewBookingNotification($booking));
+
+        if ($isStaff || $isAdmin) {
+            return redirect()->route('dashboard')->with('success', 'Court booked successfully!');
+        }
+
+        return redirect()->route('tournaments.my-court-bookings', $tournament->id)
+            ->with('success', 'Court booked successfully! Please complete your payment.');
+    }
+
+    public function myCourtBookings(Tournament $tournament)
+    {
+        $user = auth()->user();
+
+        $registration = TournamentRegistration::where('tournament_id', $tournament->id)
+            ->where('user_id', $user->id)
+            ->first();
+
+        if (!$registration) {
+            abort(403, 'You must be registered in this tournament.');
+        }
+
+        $bookings = TournamentCourtBooking::where('tournament_id', $tournament->id)
+            ->where('user_id', $user->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(5)
+            ->withQueryString();
+
+        $gcashQrCode = Setting::where('key', 'gcash_qr_code')->first()?->value;
+
+        return Inertia::render('Tournaments/MyCourtBookings', [
+            'tournament' => [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+            ],
+            'bookings' => $bookings,
+            'gcashQrCode' => $gcashQrCode ? \Illuminate\Support\Facades\Storage::url($gcashQrCode) : null,
+        ]);
+    }
+
+    public function courtBookings(Tournament $tournament)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isStaff()) {
+            abort(403);
+        }
+
+        $bookings = TournamentCourtBooking::with('user:id,name,email')
+            ->where('tournament_id', $tournament->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(10)
+            ->withQueryString()
+            ->through(fn($b) => [
+                'id' => $b->id,
+                'user_name' => $b->guest_name ?? $b->user?->name ?? 'Unknown',
+                'user_email' => $b->user?->email ?? '-',
+                'is_guest' => !is_null($b->guest_name),
+                'schedule_type' => $b->schedule_type,
+                'booking_date' => $b->booking_date,
+                'games_count' => $b->games_count,
+                'with_trainer' => $b->with_trainer,
+                'payment_method' => $b->payment_method,
+                'payment_reference' => $b->payment_reference,
+                'payment_status' => $b->payment_status,
+                'total_amount' => $b->total_amount,
+                'created_at' => $b->created_at->format('M d, Y H:i'),
+            ]);
+
+        return Inertia::render('Tournaments/CourtBookings', [
+            'tournament' => [
+                'id' => $tournament->id,
+                'name' => $tournament->name,
+            ],
+            'bookings' => $bookings,
+        ]);
+    }
+
+    public function markCourtBookingPaid(Tournament $tournament, TournamentCourtBooking $booking)
+    {
+        if (!auth()->user()->isAdmin() && !auth()->user()->isStaff()) {
+            abort(403);
+        }
+
+        if ($booking->tournament_id !== $tournament->id) {
+            abort(404);
+        }
+
+        $booking->update(['payment_status' => $booking->payment_status === 'paid' ? 'pending' : 'paid']);
+
+        if ($booking->payment_status === 'paid' && $booking->user) {
+            $booking->user->notify(new \App\Notifications\PaymentStatusNotification(
+                'Tournament Court Booking Payment Confirmed',
+                'Your court booking payment for tournament ' . $tournament->name . ' (Ref: ' . $booking->payment_reference . ') has been confirmed.',
+                '/tournaments/' . $tournament->id . '/my-court-bookings'
+            ));
+        }
+
+        return back()->with('success', 'Booking payment status updated.');
+    }
+
+    public function cancelCourtBooking(Tournament $tournament, TournamentCourtBooking $booking)
+    {
+        if ($booking->user_id !== auth()->id() || $booking->tournament_id !== $tournament->id) {
+            abort(403);
+        }
+
+        if ($booking->payment_status !== 'pending') {
+            return back()->with('error', 'Only pending bookings can be cancelled.');
+        }
+
+        $booking->update(['payment_status' => 'cancelled']);
+
+        \App\Services\ActivityLogger::log('tournament_court_booking_cancel', "User cancelled court booking for tournament: {$tournament->name}", $booking);
+
+        $adminsAndStaff = \App\Models\User::whereIn('type', ['admin', 'staff'])->get();
+        $customerName = $booking->guest_name ?? $booking->user?->name ?? 'A user';
+        \Illuminate\Support\Facades\Notification::send($adminsAndStaff, new \App\Notifications\CancelBookingNotification(
+            $booking,
+            "{$customerName} has cancelled a tournament court booking for {$tournament->name}",
+            url('/tournaments/' . $tournament->id . '/court-bookings'),
+            'booking',
+            'Tournament Court Booking Cancelled'
+        ));
+
+        return back()->with('success', 'Booking cancelled successfully.');
     }
 }
 

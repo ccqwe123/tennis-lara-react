@@ -44,7 +44,7 @@ export interface NavItem {
     icon?: LucideIcon;
     isActive?: boolean;
     roles?: UserType[];
-    items?: Omit<NavItem, 'icon' | 'items' | 'isActive'>[];
+    items?: (Omit<NavItem, 'icon' | 'items' | 'isActive'> & { isModal?: string })[];
 }
 
 export interface NavProject {

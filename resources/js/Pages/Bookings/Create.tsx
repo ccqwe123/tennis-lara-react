@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import * as z from "zod"
@@ -9,7 +9,7 @@ import { toast } from "sonner"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { cn } from "@/lib/utils"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Calendar } from "@/Components/ui/calendar"
 import {
@@ -64,6 +64,7 @@ interface PageProps {
 }
 
 const formSchema = z.object({
+    guest_name: z.string(),
     user_id: z.number().nullable(),
     schedule_type: z.enum(["day", "night"]),
     booking_date: z.date(),
@@ -78,12 +79,38 @@ const formSchema = z.object({
 
 export default function BookingCreate({ auth, settings, users, isStaff, isAdmin }: PageProps) {
     const [openUserSelect, setOpenUserSelect] = useState(false)
+    const [openGuestSelect, setOpenGuestSelect] = useState(false)
+    const [guests, setGuests] = useState<{ id: number; name: string }[]>([])
+    const [isLoadingGuests, setIsLoadingGuests] = useState(false)
     const [showConfirmDialog, setShowConfirmDialog] = useState(false)
+
+    // Fetch guests from API
+    const fetchGuests = async (search: string = '') => {
+        setIsLoadingGuests(true)
+        try {
+            const response = await fetch(`/bookings/guests?search=${encodeURIComponent(search)}`)
+            const data = await response.json()
+            setGuests(data)
+        } catch (error) {
+            console.error('Failed to fetch guests:', error)
+            setGuests([])
+        } finally {
+            setIsLoadingGuests(false)
+        }
+    }
+
+    // Fetch guests when the guest combobox opens
+    useEffect(() => {
+        if (openGuestSelect) {
+            fetchGuests()
+        }
+    }, [openGuestSelect])
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
+            guest_name: '',
             user_id: isStaff ? null : auth.user.id,
             games_count: 1,
             with_trainer: false,
@@ -126,7 +153,6 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
         }
         return 150 // Non-member / Guest
     }
-
     const courtRate = getCourtRate()
     const trainerFee = values.with_trainer ? parseFloat(settings.fee_trainer || "0") : 0
     const basePickerFee = parseFloat(settings.fee_picker || "80")
@@ -189,7 +215,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
 
                                     {/* 0. Guest / User Selection (Only for Staff) */}
                                     {
-                                        isStaff || isAdmin && (
+                                        (isStaff || isAdmin) && (
                                             <div className="bg-slate-50 p-4 rounded-lg space-y-4" >
                                                 <div className="flex items-center justify-between" >
                                                     <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider" > Customer Information </h3>
@@ -207,7 +233,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                 </div>
 
                                                 {
-                                                    !isGuest && (
+                                                    !isGuest ? (
                                                         <FormField
                                                             control={form.control}
                                                             name="user_id"
@@ -221,7 +247,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                                                     role="combobox"
                                                                                     className={
                                                                                         cn(
-                                                                                            "w-full justify-between h-12",
+                                                                                            "w-full justify-between h-12 bg-white",
                                                                                             !field.value && "text-muted-foreground"
                                                                                         )
                                                                                     }
@@ -282,6 +308,32 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                                 </FormItem>
                                                             )}
                                                         />
+                                                    ) : (
+                                                        <>
+                                                            <FormField
+                                                                control={form.control}
+                                                                name="guest_name"
+                                                                render={({ field }) => (
+                                                                    <FormItem>
+                                                                        <FormLabel className="text-base font-semibold">Guest Name</FormLabel>
+                                                                        <FormControl>
+                                                                            {/* <Input type="text" {...field} /> */}
+                                                                            <Input
+                                                                                className="py-5 px-3 bg-white"
+                                                                                placeholder="Enter guest name"
+                                                                                aria-required="true"
+                                                                                id="guest-name"
+                                                                                type="text"
+                                                                                value={field.value}
+                                                                                onChange={(e) => field.onChange(e.target.value)}
+                                                                                required
+                                                                            />
+                                                                        </FormControl>
+                                                                        <FormMessage />
+                                                                    </FormItem>
+                                                                )}
+                                                            />
+                                                        </>
                                                     )}
                                             </div>
                                         )}
@@ -607,7 +659,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                             <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider" > Customer </h4>
                             <div className="flex items-center justify-between" >
                                 <span className="font-medium text-gray-900" >
-                                    {isGuest ? "Guest (Walk-in)" : selectedUser?.name || "Not selected"}
+                                    {isGuest ? values.guest_name.toUpperCase() : selectedUser?.name.toUpperCase() || "Not selected"}
                                 </span>
                                 {
                                     !isGuest && selectedUser && (

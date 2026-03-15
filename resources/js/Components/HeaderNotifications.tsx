@@ -1,5 +1,5 @@
-import { Bell, Check } from "lucide-react"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Bell } from "lucide-react"
+import { Button } from "@/Components/ui/button"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -46,6 +46,18 @@ export function HeaderNotifications() {
             preserveScroll: true,
         });
     };
+
+    const timeAgo = (dateStr: string) => {
+        const now = new Date()
+        const date = new Date(dateStr)
+        const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+        if (seconds < 60) return `${seconds}s ago`
+        const minutes = Math.floor(seconds / 60)
+        if (minutes < 60) return `${minutes}m ago`
+        const hours = Math.floor(minutes / 60)
+        if (hours < 24) return `${hours}hr ago`
+        return date.toLocaleDateString("en-PH", { month: "long", day: "numeric", hour: "numeric", minute: "2-digit", hour12: true })
+    }
 
     return (
         <DropdownMenu modal={false}>
@@ -125,9 +137,9 @@ export function HeaderNotifications() {
                                 <p className={cn("text-[10px] mt-1 transition-colors",
                                     !notification.read_at
                                         ? "text-muted-foreground/60 group-hover:text-blue-200"
-                                        : "text-muted-foreground/60 group-hover:text-gray-400"
+                                        : "text-muted-foreground/70 group-hover:text-gray-200"
                                 )}>
-                                    {new Date(notification.created_at).toLocaleDateString()}
+                                    {timeAgo(notification.created_at)}
                                 </p>
                             </DropdownMenuItem>
                         ))

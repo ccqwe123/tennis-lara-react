@@ -3,7 +3,7 @@ import { router } from "@inertiajs/react"
 import { Calendar, Clock, Sun, Moon, Banknote, CreditCard, ChevronLeft, ChevronRight, Download, Copy, Check } from "lucide-react"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Badge } from "@/Components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import {
@@ -23,6 +23,18 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/Components/ui/pagination"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/Components/ui/alert-dialog"
+import { AlertCircle } from "lucide-react"
+import { StatusBadge } from "@/Components/StatusBadge"
 
 interface Booking {
     id: number
@@ -56,6 +68,8 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
     const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null)
     const [showDialog, setShowDialog] = useState(false)
     const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+    const [showCancelDialog, setShowCancelDialog] = useState(false)
+    const [isCancelling, setIsCancelling] = useState(false)
     const [copied, setCopied] = useState(false)
 
     const handleCardClick = (booking: Booking) => {
@@ -74,6 +88,20 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
         setTimeout(() => {
             setShowPaymentDialog(true)
         }, 150)
+    }
+
+    const handleConfirmCancel = () => {
+        if (!selectedBooking) return
+
+        setIsCancelling(true)
+        router.post(route('bookings.cancel', selectedBooking.id), {}, {
+            onSuccess: () => {
+                setShowCancelDialog(false)
+                setShowDialog(false)
+                setSelectedBooking(null)
+            },
+            onFinish: () => setIsCancelling(false)
+        })
     }
 
     const handleCopyReference = () => {
@@ -155,10 +183,26 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
                                                         <span className="font-medium text-gray-900">{booking.booking_date}</span>
                                                     </div>
                                                     <Badge
-                                                        variant={booking.payment_status === "paid" ? "default" : "secondary"}
-                                                        className={booking.payment_status === "paid" ? "bg-green-500" : "bg-amber-500 text-white"}
+                                                        variant={
+                                                            booking.payment_status === "paid"
+                                                                ? "default"
+                                                                : booking.payment_status === "cancelled"
+                                                                    ? "destructive"
+                                                                    : "secondary"
+                                                        }
+                                                        className={
+                                                            booking.payment_status === "paid"
+                                                                ? "bg-green-500"
+                                                                : booking.payment_status === "cancelled"
+                                                                    ? "bg-red-200"
+                                                                    : "bg-amber-500 text-white"
+                                                        }
                                                     >
-                                                        {booking.payment_status === "paid" ? "Paid" : "Pending"}
+                                                        {booking.payment_status === "paid"
+                                                            ? "Paid"
+                                                            : booking.payment_status === "cancelled"
+                                                                ? "Cancelled"
+                                                                : "Pending"}
                                                     </Badge>
                                                 </div>
 
@@ -281,7 +325,12 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
                         <div className="space-y-4 py-4">
                             {/* Schedule Info */}
                             <div className="bg-slate-50 rounded-lg p-4 space-y-3">
-                                <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Schedule</h4>
+                                <div className="flex items-center justify-between">
+                                    <h4 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Schedule</h4>
+                                    {selectedBooking.payment_status === "pending" && (
+                                        <button onClick={() => setShowCancelDialog(true)} className="bg-red-400 text-xs px-2 py-1 rounded-full text-white hover:bg-red-500 cursor-pointer ring-1 ring-red-500 focus-visible:ring-red-500 focus-visible:ring-offset-2 focus-visible:ring-offset-white">Cancel Booking</button>
+                                    )}
+                                </div>
 
                                 <div className="flex items-center gap-3">
                                     {selectedBooking.schedule_type === "day" ? (
@@ -328,12 +377,7 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
                                         )}
                                         <span className="font-medium capitalize">{selectedBooking.payment_method}</span>
                                     </div>
-                                    <Badge
-                                        variant={selectedBooking.payment_status === "paid" ? "default" : "secondary"}
-                                        className={selectedBooking.payment_status === "paid" ? "bg-green-500" : "bg-amber-500 text-white"}
-                                    >
-                                        {selectedBooking.payment_status === "paid" ? "Paid" : "Pending"}
-                                    </Badge>
+                                    <StatusBadge type="payment_status" value={selectedBooking.payment_status} />
                                 </div>
 
                                 {/* Reference Number */}
@@ -363,7 +407,7 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
                         </div>
                     )}
 
-                    <DialogFooter className="gap-2 sm:gap-0">
+                    <DialogFooter className="space-x-2 gap-2 sm:gap-0">
                         <Button
                             type="button"
                             variant="outline"
@@ -372,13 +416,15 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
                             Close
                         </Button>
                         {selectedBooking?.payment_status === "pending" && (
-                            <Button
-                                type="button"
-                                onClick={handlePayNow}
-                                className="bg-emerald-500 hover:bg-emerald-600"
-                            >
-                                Pay Now - ₱{parseFloat(selectedBooking.total_amount).toFixed(2)}
-                            </Button>
+                            <>
+                                <Button
+                                    type="button"
+                                    onClick={handlePayNow}
+                                    className="bg-emerald-500 hover:bg-emerald-600"
+                                >
+                                    Pay Now - ₱{parseFloat(selectedBooking.total_amount).toFixed(2)}
+                                </Button>
+                            </>
                         )}
                     </DialogFooter>
                 </DialogContent>
@@ -534,6 +580,32 @@ export default function MyBookings({ auth, bookings, gcashQrCode }: PageProps) {
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
+
+            {/* Cancel Confirmation Dialog */}
+            <AlertDialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertCircle className="h-10 w-10 text-red-500 mb-2 mx-auto sm:mx-0" />
+                        <AlertDialogTitle>Are you sure you want to cancel?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will cancel your booking for {selectedBooking?.booking_date}. This action cannot be undone.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel disabled={isCancelling}>No, keep it</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={(e) => {
+                                e.preventDefault()
+                                handleConfirmCancel()
+                            }}
+                            disabled={isCancelling}
+                            className="bg-red-500 hover:bg-red-600 text-white"
+                        >
+                            {isCancelling ? "Cancelling..." : "Yes, cancel booking"}
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </AuthenticatedLayout>
     )
 }

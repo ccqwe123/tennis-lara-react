@@ -17,7 +17,7 @@ import {
   AlertDialogTrigger,
 } from "@/Components/ui/alert-dialog"
 import { Badge } from "@/Components/ui/badge"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import {
   Card,
   CardAction,

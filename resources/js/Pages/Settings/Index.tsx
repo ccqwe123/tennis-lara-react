@@ -4,7 +4,7 @@ import { Head, useForm, router } from "@inertiajs/react"
 import { Save, Upload, Trash2, QrCode, Image as ImageIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"

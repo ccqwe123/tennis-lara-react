@@ -21,6 +21,7 @@ import {
 
 export function NavMain({
     items,
+    onModalTrigger,
 }: {
     items: {
         title: string
@@ -31,8 +32,10 @@ export function NavMain({
             title: string
             url: string
             isActive?: boolean
+            isModal?: string
         }[]
     }[]
+    onModalTrigger?: (modalId: string) => void
 }) {
     return (
         <SidebarGroup>
@@ -57,11 +60,21 @@ export function NavMain({
                                     <SidebarMenuSub>
                                         {item.items?.map((subItem) => (
                                             <SidebarMenuSubItem key={subItem.title}>
-                                                <SidebarMenuSubButton asChild isActive={subItem.isActive}>
-                                                    <Link href={subItem.url}>
+                                                {subItem.isModal ? (
+                                                    <SidebarMenuSubButton
+                                                        asChild={false}
+                                                        onClick={() => onModalTrigger?.(subItem.isModal!)}
+                                                        className="cursor-pointer"
+                                                    >
                                                         <span>{subItem.title}</span>
-                                                    </Link>
-                                                </SidebarMenuSubButton>
+                                                    </SidebarMenuSubButton>
+                                                ) : (
+                                                    <SidebarMenuSubButton asChild isActive={subItem.isActive}>
+                                                        <Link href={subItem.url}>
+                                                            <span>{subItem.title}</span>
+                                                        </Link>
+                                                    </SidebarMenuSubButton>
+                                                )}
                                             </SidebarMenuSubItem>
                                         ))}
                                     </SidebarMenuSub>

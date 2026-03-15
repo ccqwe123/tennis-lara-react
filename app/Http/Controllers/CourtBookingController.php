@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Guest;
 use Illuminate\Http\Request;
 
 use App\Models\Setting;
@@ -35,7 +36,7 @@ class CourtBookingController extends Controller
                 $query->whereNull('user_id');
             } else {
                 $query->whereHas('user', function ($q) use ($status) {
-                    $q->where('membership_status', $status);
+                    $q->where('user_type_at_booking', $status);
                 });
             }
         }
@@ -184,10 +185,25 @@ class CourtBookingController extends Controller
         ]);
     }
 
+    public function getGuests(Request $request)
+    {
+        $search = $request->get('search', '');
+
+        $guests = Guest::when($search, function ($query) use ($search) {
+            $query->where('name', 'like', "%{$search}%");
+        })
+            ->orderBy('name', 'asc')
+            ->limit(20)
+            ->get(['id', 'name']);
+
+        return response()->json($guests);
+    }
+
     public function store(Request $request)
     {
         $isStaff = auth()->user()->isStaff();
-
+        $isAdmin = auth()->user()->isAdmin();
+        // info($request);
         // Force booking_date to Manila time (Timezone: Asia/Manila)
         $request->merge(['booking_date' => now('Asia/Manila')->toDateString()]);
 
@@ -204,9 +220,19 @@ class CourtBookingController extends Controller
         ]);
 
         // Determine effective user ID
-        $userId = $isStaff ? $request->user_id : auth()->id();
+        $userId = $isStaff || $isAdmin ? $request->user_id ? $request->user_id : null : auth()->id();
 
         $settings = Setting::all()->pluck('value', 'key');
+
+        if ($request->is_guest) {
+            try {
+                $guest = Guest::create([
+                    'name' => $request->guest_name,
+                ]);
+            } catch (\Throwable $th) {
+                return redirect()->back()->with('error', 'Failed to create guest. Please try again.');
+            }
+        }
 
         // Pricing Logic
         $userType = 'non-member';
@@ -258,11 +284,12 @@ class CourtBookingController extends Controller
         $paymentReference = 'TTC-' . strtoupper(substr(md5(uniqid(mt_rand(), true)), 0, 8));
 
         // Staff bookings are auto-paid, member/non-member bookings are pending
-        $paymentStatus = $isStaff ? 'paid' : 'pending';
+        $paymentStatus = 'pending';
 
         $booking = CourtBooking::create([
             'user_id' => $userId,
             'staff_id' => $isStaff ? auth()->id() : null,
+            'guest_name' => $request->is_guest ? $request->guest_name : null,
             'schedule_type' => $request->schedule_type,
             'booking_date' => $request->booking_date,
             'games_count' => $request->games_count,
@@ -294,5 +321,34 @@ class CourtBookingController extends Controller
             return redirect()->route('dashboard')->with('success', 'Booking created successfully!');
         }
         return redirect()->route('bookings.my')->with('success', 'Booking created! Please complete payment.');
+    }
+
+    public function cancel(CourtBooking $booking)
+    {
+        // Ensure only the owner can cancel
+        if ($booking->user_id !== auth()->id()) {
+            return redirect()->back()->with('error', 'Unauthorized action.');
+        }
+
+        // Only allow cancellation if pending
+        if ($booking->payment_status !== 'pending') {
+            return redirect()->back()->with('error', 'Only pending bookings can be cancelled.');
+        }
+
+        $booking->update([
+            'payment_status' => 'cancelled'
+        ]);
+
+        // Log Activity
+        \App\Services\ActivityLogger::log('court_booking', "User cancelled their booking", $booking);
+
+        $adminsAndStaff = User::whereIn('type', ['admin', 'staff'])->get();
+        $message = $booking->user?->name ? $booking->user?->name . ' has cancelled a court booking' : 'A new court booking has been cancelled';
+        $url = url('/bookings?paymentStatus=cancelled');
+        $type = 'booking';
+        $title = 'Booking Cancelled';
+        \Illuminate\Support\Facades\Notification::send($adminsAndStaff, new \App\Notifications\CancelBookingNotification($booking, $message, $url, $type, $title));
+
+        return redirect()->back()->with('success', 'Booking cancelled successfully.');
     }
 }

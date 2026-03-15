@@ -1,17 +1,17 @@
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { Head, router, Link } from "@inertiajs/react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import { format } from "date-fns"
 
-import { Calendar as CalendarIcon, Filter, Printer, Download, Search, Loader2, Users } from "lucide-react"
+import { Calendar as CalendarIcon, Filter, Printer, Download, Search, Users, ChevronsUpDown, Check } from "lucide-react"
 import axios from "axios"
 
 import { cn } from "@/lib/utils"
 
 declare var route: any;
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import ApplicationLogo from "@/Components/ApplicationLogo"
 import { Calendar } from "@/Components/ui/calendar"
 import {
@@ -32,7 +32,6 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/Components/ui/select"
-import { Input } from "@/Components/ui/input"
 import { Badge } from "@/Components/ui/badge"
 import {
     Pagination,
@@ -43,6 +42,14 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/Components/ui/pagination"
+import {
+    Command,
+    CommandEmpty,
+    CommandGroup,
+    CommandInput,
+    CommandItem,
+    CommandList,
+} from "@/Components/ui/command"
 
 interface Tournament {
     id: number
@@ -85,6 +92,23 @@ export default function TournamentReports({ auth, tournaments, filters }: Props)
     )
     const [status, setStatus] = useState(filters.status || "all")
     const [search, setSearch] = useState(filters.search || "")
+    const [searchOpen, setSearchOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState(filters.search || "")
+    const [searchSuggestions, setSearchSuggestions] = useState<{ id: number; name: string }[]>([])
+    const searchDebounce = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+    const fetchSuggestions = (q: string) => {
+        axios.get(route("api.tournaments.active"), { params: { search: q || undefined } })
+            .then(res => setSearchSuggestions(res.data))
+    }
+
+    useEffect(() => { fetchSuggestions("") }, [])
+
+    const handleSearchQuery = (q: string) => {
+        setSearchQuery(q)
+        if (searchDebounce.current) clearTimeout(searchDebounce.current)
+        searchDebounce.current = setTimeout(() => fetchSuggestions(q), 300)
+    }
 
 
     const [printData, setPrintData] = useState<any[]>([])
@@ -233,16 +257,40 @@ export default function TournamentReports({ auth, tournaments, filters }: Props)
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             {/* Search */}
                             <div className="space-y-2">
-                                <label className="text-sm font-medium">Search</label>
-                                <div className="relative">
-                                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                                    <Input
-                                        placeholder="Search tournament name..."
-                                        value={search}
-                                        onChange={(e) => setSearch(e.target.value)}
-                                        className="pl-8"
-                                    />
-                                </div>
+                                <label className="text-sm font-medium">Tournament</label>
+                                <Popover open={searchOpen} onOpenChange={setSearchOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" role="combobox" className="w-full justify-between font-normal">
+                                            <span className="truncate">{search || "Search tournament..."}</span>
+                                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
+                                        <Command shouldFilter={false}>
+                                            <CommandInput
+                                                placeholder="Type to search..."
+                                                value={searchQuery}
+                                                onValueChange={handleSearchQuery}
+                                            />
+                                            <CommandList>
+                                                <CommandEmpty>No tournament found.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {searchSuggestions.map(t => (
+                                                        <CommandItem key={t.id} value={t.name} onSelect={() => { setSearch(t.name); setSearchQuery(t.name); setSearchOpen(false); setDateFrom(undefined); setDateTo(undefined); setStatus("all") }} className={cn(search === t.name && "bg-green-500 text-white")}>
+                                                            <Check className={cn("mr-2 h-4 w-4", search === t.name ? "opacity-100" : "opacity-0")} />
+                                                            {t.name}
+                                                        </CommandItem>
+                                                    ))}
+                                                    {search && (
+                                                        <CommandItem value="__clear" onSelect={() => { setSearch(""); setSearchQuery(""); fetchSuggestions(""); setSearchOpen(false) }}>
+                                                            Clear selection
+                                                        </CommandItem>
+                                                    )}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
                             </div>
 
                             {/* Date From */}
@@ -256,7 +304,7 @@ export default function TournamentReports({ auth, tournaments, filters }: Props)
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar mode="single" selected={dateFrom} onSelect={setDateFrom} initialFocus />
+                                        <Calendar mode="single" selected={dateFrom} onSelect={(d) => { setDateFrom(d); setSearch(""); setSearchQuery("") }} initialFocus />
                                     </PopoverContent>
                                 </Popover>
                             </div>
@@ -272,7 +320,7 @@ export default function TournamentReports({ auth, tournaments, filters }: Props)
                                         </Button>
                                     </PopoverTrigger>
                                     <PopoverContent className="w-auto p-0" align="start">
-                                        <Calendar mode="single" selected={dateTo} onSelect={setDateTo} initialFocus />
+                                        <Calendar mode="single" selected={dateTo} onSelect={(d) => { setDateTo(d); setSearch(""); setSearchQuery("") }} initialFocus />
                                     </PopoverContent>
                                 </Popover>
                             </div>
@@ -280,7 +328,7 @@ export default function TournamentReports({ auth, tournaments, filters }: Props)
                             {/* Status */}
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Status</label>
-                                <Select value={status} onValueChange={setStatus}>
+                                <Select value={status} onValueChange={(v) => { setStatus(v); setSearch(""); setSearchQuery("") }}>
                                     <SelectTrigger className="w-full">
                                         <SelectValue placeholder="All statuses" />
                                     </SelectTrigger>
@@ -301,6 +349,7 @@ export default function TournamentReports({ auth, tournaments, filters }: Props)
                                 setDateTo(undefined)
                                 setStatus("all")
                                 setSearch("")
+                                setSearchQuery("")
                                 router.visit(route('reports.tournaments'))
                             }}>
                                 Reset

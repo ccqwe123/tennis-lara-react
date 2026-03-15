@@ -4,7 +4,7 @@ import { Head, Link, router, usePage } from "@inertiajs/react"
 import { Search, Plus, ArrowUp, ArrowDown, AlertTriangle } from "lucide-react"
 import { toast } from "sonner"
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import {
     Card,
     CardContent,
@@ -166,6 +166,8 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
             }
         })
     }
+    
+    const isAdmin = auth.user.type === 'admin'
 
     return (
         <AuthenticatedLayout
@@ -264,7 +266,9 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
                                         <TableHead>Current Plan</TableHead>
                                         <TableHead>Start Date</TableHead>
                                         <TableHead>Expiry</TableHead>
+                                        {isAdmin && (
                                         <TableHead className="text-right">Action</TableHead>
+                                        )}
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -300,15 +304,17 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
                                                         {user.expiry_date}
                                                     </span>
                                                 </TableCell>
-                                                <TableCell className="text-right">
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        onClick={() => openEditDialog(user)}
+                                                {isAdmin && (
+                                                    <TableCell className="text-right">
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="sm"
+                                                            onClick={() => openEditDialog(user)}
                                                     >
                                                         Edit
                                                     </Button>
                                                 </TableCell>
+                                                )}
                                             </TableRow>
                                         ))
                                     ) : (

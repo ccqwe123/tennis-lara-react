@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 
 declare var route: any;
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import ApplicationLogo from "@/Components/ApplicationLogo"
 import { Calendar } from "@/Components/ui/calendar"
 import {
@@ -355,6 +355,7 @@ export default function BookingReports({ auth, bookings, filters, stats }: Props
                                         <SelectItem value="all">All Statuses</SelectItem>
                                         <SelectItem value="paid">Paid</SelectItem>
                                         <SelectItem value="pending">Pending</SelectItem>
+                                        <SelectItem value="cancelled">Cancelled</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -3,7 +3,7 @@ import { Head, router } from "@inertiajs/react";
 import { format } from "date-fns";
 import { Bell, Check, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { ButtonCustom as Button } from "@/Components/ui/button-custom";
+import { Button } from "@/Components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Badge } from "@/Components/ui/badge";
 

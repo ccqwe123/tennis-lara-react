@@ -32,7 +32,7 @@ export const navMain: NavItem[] = [
         roles: ['admin', 'staff', 'member', 'non-member', 'student'],
     },
     {
-        title: "Bookings",
+        title: "Court",
         url: "/bookings",
         icon: Calendar,
         roles: ['admin', 'staff', 'member', 'non-member', 'student'],
@@ -50,6 +50,7 @@ export const navMain: NavItem[] = [
         items: [
             { title: "View Tournaments", url: "/tournaments", roles: ['admin', 'staff', 'member', 'non-member', 'student'] },
             { title: "Manage", url: "/tournaments/manage", roles: ['admin'] },
+            { title: "Book Tournament Court", url: "#", isModal: "book-tournament-court", roles: ['admin', 'staff'] },
         ],
     },
     {
@@ -74,17 +75,12 @@ export const navMain: NavItem[] = [
         url: "/payments/verify",
         icon: CreditCard,
         roles: ['admin', 'staff'],
+        items: [
+            { title: "Court Payments", url: "/payments/verify/court", roles: ['admin', 'staff'] },
+            { title: "Tournament Registration", url: "/payments/verify/tournament", roles: ['admin', 'staff'] },
+            { title: "Tournament Court Bookings", url: "/payments/verify/tournament-court", roles: ['admin', 'staff'] },
+        ],
     },
-    // {
-    //     title: "Payments",
-    //     url: "/payments",
-    //     icon: CreditCard,
-    //     roles: ['admin', 'staff', 'member', 'non-member'],
-    //     items: [
-    //         { title: "My Payments", url: "/payments", roles: ['admin', 'staff', 'member', 'non-member'] },
-    //         { title: "Verify Payments", url: "/payments/verify", roles: ['admin', 'staff'] },
-    //     ],
-    // },
     {
         title: "Users",
         url: "/users",
@@ -97,10 +93,11 @@ export const navMain: NavItem[] = [
         icon: BookOpen,
         roles: ['admin', 'staff'],
         items: [
-            { title: "Booking Reports", url: "/reports/bookings", roles: ['admin', 'staff'] },
+            { title: "Court Booking Reports", url: "/reports/bookings", roles: ['admin', 'staff'] },
             { title: "Revenue Reports", url: "/reports/revenue", roles: ['admin'] },
             { title: "Member Reports", url: "/reports/members", roles: ['admin', 'staff'] },
-            { title: "Tournament Reports", url: "/reports/tournaments", roles: ['admin', 'staff'] },
+            { title: "Tournament Registration Reports", url: "/reports/tournaments", roles: ['admin', 'staff'] },
+            { title: "Tournament Court Reports", url: "/reports/tournament-courts", roles: ['admin', 'staff'] },
         ],
     },
     {

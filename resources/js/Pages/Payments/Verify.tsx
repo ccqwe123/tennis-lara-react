@@ -5,7 +5,7 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon, Check, Filter, Loader2, X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
 import { StatusBadge } from "@/Components/StatusBadge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs"
@@ -85,7 +85,7 @@ export default function VerifyPayments({ auth, bookings, registrations, paid_boo
         setIsConfirmOpen(true)
     }
 
-    const confirmPayment = (status: string) => {
+    const confirmPayment = (status: 'paid' | 'pending') => {
         if (!selectedRecord) return
         setProcessing(true)
         const routeName = selectedRecord.type === 'booking'
@@ -188,17 +188,17 @@ export default function VerifyPayments({ auth, bookings, registrations, paid_boo
                     </Card>
                 )}
 
-                <Tabs defaultValue={filters.tab || "bookings"} className="w-full">
+                <Tabs defaultValue={filters.tab || "bookings"} onValueChange={(val) => router.get(route('payments.verify'), { date: date ? format(date, 'yyyy-MM-dd') : '', tab: val }, { preserveState: true, replace: true })} className="w-full">
                     <TabsList className="grid w-full grid-cols-1 md:grid-cols-2 lg:grid-cols-4 mt-2 gap-2 h-auto">
                         <TabsTrigger className="text-sm w-full" value="bookings">
-                            Unpaid Bookings
+                            Unpaid Court Bookings
                         </TabsTrigger>
 
                         <TabsTrigger className="text-sm w-full" value="tournaments">
                             Unpaid Tournament
                         </TabsTrigger>
                         <TabsTrigger className="text-sm w-full" value="paid_bookings">
-                            Paid Bookings
+                            Paid Court Bookings
                         </TabsTrigger>
 
                         <TabsTrigger className="text-sm w-full" value="paid_registrations">
@@ -445,7 +445,7 @@ export default function VerifyPayments({ auth, bookings, registrations, paid_boo
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsConfirmOpen(false)} disabled={processing}>Cancel</Button>
-                        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => confirmPayment('pending')} disabled={processing}>
+                        <Button className="bg-emerald-600 hover:bg-emerald-700" onClick={() => confirmPayment('paid')} disabled={processing}>
                             {processing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
                             Confirm Payment
                         </Button>
@@ -480,7 +480,7 @@ export default function VerifyPayments({ auth, bookings, registrations, paid_boo
                     )}
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setIsRemovePaymentConfirmOpen(false)} disabled={processing}>Cancel</Button>
-                        <Button className="bg-red-600 hover:bg-red-700" onClick={() => confirmPayment('paid')} disabled={processing}>
+                        <Button className="bg-red-600 hover:bg-red-700" onClick={() => confirmPayment('pending')} disabled={processing}>
                             {processing ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
                             Remove Payment
                         </Button>

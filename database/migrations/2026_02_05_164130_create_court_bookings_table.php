@@ -14,6 +14,7 @@ return new class extends Migration {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('staff_id')->nullable()->constrained('users')->onDelete('set null'); // Who processed it
+            $table->string('guest_name')->nullable();
             $table->string('schedule_type'); // day, night
             $table->date('booking_date');
             $table->integer('games_count')->default(1);

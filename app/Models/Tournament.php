@@ -28,4 +28,9 @@ class Tournament extends Model
     {
         return $this->hasMany(TournamentRegistration::class);
     }
+
+    public function courtBookings()
+    {
+        return $this->hasMany(TournamentCourtBooking::class);
+    }
 }

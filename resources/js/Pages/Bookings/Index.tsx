@@ -8,7 +8,7 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 declare var route: any;
 
 import { Input } from "@/Components/ui/input"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Badge } from "@/Components/ui/badge"
 import { StatusBadge } from "@/Components/StatusBadge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
@@ -251,6 +251,7 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                         <SelectItem value="member">Members Only</SelectItem>
                                         <SelectItem value="non-member">Non-Members Only</SelectItem>
                                         <SelectItem value="guest">Guests Only</SelectItem>
+                                        <SelectItem value="student">Students Only</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Select value={paymentStatus} onValueChange={handlePaymentStatusChange}>
@@ -262,6 +263,7 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                         <SelectItem value="all">All Payment</SelectItem>
                                         <SelectItem value="paid">Paid</SelectItem>
                                         <SelectItem value="pending">Unpaid / Pending</SelectItem>
+                                        <SelectItem value="cancelled">Cancelled</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -341,9 +343,7 @@ export default function BookingsIndex({ auth, bookings, filters, sort, stats }: 
                                                     </TableCell>
                                                     <TableCell className="text-center font-medium">{booking.games_count}</TableCell>
                                                     <TableCell className="text-center">
-                                                        <Badge variant={booking.with_trainer ? "default" : "outline"} className={booking.with_trainer ? "bg-purple-500" : ""}>
-                                                            {booking.with_trainer ? "Yes" : "No"}
-                                                        </Badge>
+                                                        <StatusBadge type="trainer" value={booking.with_trainer ? "Yes" : "No"} />
                                                     </TableCell>
                                                     <TableCell>
                                                         <StatusBadge type="payment_method" value={booking.payment_method} />

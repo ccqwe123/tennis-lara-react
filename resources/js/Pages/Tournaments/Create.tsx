@@ -4,7 +4,7 @@ import { Trophy, ArrowLeft } from "lucide-react"
 import { toast } from "sonner"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import { Label } from "@/Components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/Components/ui/card"

@@ -6,7 +6,7 @@ import { GalleryVerticalEnd } from "lucide-react"
 
 import { NavMain } from "@/Components/ui/nav-main"
 import { NavProjects } from "@/Components/ui/nav-projects"
-// import { NavUser } from "@/Components/ui/nav-user"
+import { BookTournamentCourtModal } from "@/Components/BookTournamentCourtModal"
 import {
     Sidebar,
     SidebarContent,
@@ -26,6 +26,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     const { auth } = pageProps
     const user = auth.user
     const userType = user?.type
+
+    const [activeModal, setActiveModal] = React.useState<string | null>(null)
 
     // Filter navigation items based on user role and set active state
     const filteredNavMain = React.useMemo(() => {
@@ -86,7 +88,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
 
             <SidebarContent>
-                <NavMain items={filteredNavMain} />
+                <NavMain items={filteredNavMain} onModalTrigger={setActiveModal} />
                 {filteredNavProjects.length > 0 && (
                     <NavProjects projects={filteredNavProjects} />
                 )}
@@ -101,6 +103,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 </div>
             </SidebarFooter>
             <SidebarRail />
+
+            <BookTournamentCourtModal
+                open={activeModal === "book-tournament-court"}
+                onClose={() => setActiveModal(null)}
+            />
         </Sidebar>
     )
 }

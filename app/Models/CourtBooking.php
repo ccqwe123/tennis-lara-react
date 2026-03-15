@@ -11,6 +11,7 @@ class CourtBooking extends Model
 
     protected $fillable = [
         'user_id',
+        'guest_name',
         'staff_id',
         'schedule_type',
         'booking_date',

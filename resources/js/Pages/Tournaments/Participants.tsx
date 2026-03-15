@@ -1,10 +1,10 @@
 import { useState } from "react"
 import { Head, router } from "@inertiajs/react"
-import { ArrowLeft, Users, CreditCard, Trash2, CheckCircle, XCircle, Check } from "lucide-react"
+import { ArrowLeft, Users, CreditCard, Trash2, CheckCircle, XCircle, Check, BookOpen } from "lucide-react"
 import { toast } from "sonner"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Badge } from "@/Components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
 import {
@@ -238,10 +238,19 @@ export default function Participants({ auth, tournament, registrations, summary 
                     {/* Participants Table */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Users className="h-5 w-5" />
-                                Participants List
-                            </CardTitle>
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Users className="h-5 w-5" />
+                                    Participants List
+                                </CardTitle>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => router.visit(route('tournaments.court-bookings', tournament.id))}
+                                >
+                                    <BookOpen className="h-4 w-4 mr-2" />
+                                    View Court Bookings
+                                </Button>
+                            </div>
                         </CardHeader>
                         <CardContent>
                             <div className="border rounded-lg overflow-hidden">

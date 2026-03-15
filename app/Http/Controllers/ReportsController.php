@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourtBooking;
+use App\Models\TournamentCourtBooking;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -659,6 +660,129 @@ class ReportsController extends Controller
             $pdf = Pdf::loadView('reports.tournaments_pdf', ['tournaments' => $data, 'filters' => $filters]);
             return $pdf->download('tournaments_report.pdf');
         }
+    }
+
+    public function tournamentCourtReport(Request $request)
+    {
+        $filters = $request->only(['tournament_id', 'user_search', 'payment_method', 'payment_status']);
+
+        $query = \App\Models\TournamentCourtBooking::with(['user:id,name,email', 'tournament:id,name']);
+
+        if (!empty($filters['tournament_id']) && $filters['tournament_id'] !== 'all') {
+            $query->where('tournament_id', $filters['tournament_id']);
+        }
+        if (!empty($filters['user_search'])) {
+            $search = $filters['user_search'];
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"))
+                  ->orWhere('guest_name', 'like', "%{$search}%");
+            });
+        }
+        if (!empty($filters['payment_method']) && $filters['payment_method'] !== 'all') {
+            $query->where('payment_method', $filters['payment_method']);
+        }
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'all') {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+
+        $statsQuery = clone $query;
+        $total_paid   = (clone $statsQuery)->where('payment_status', 'paid')->sum('total_amount');
+        $total_unpaid = (clone $statsQuery)->where('payment_status', 'pending')->sum('total_amount');
+        $total_count  = $statsQuery->count();
+
+        $bookings = $query->orderBy('created_at', 'desc')
+            ->paginate($request->input('per_page', 10))
+            ->withQueryString();
+
+        $bookings->through(fn($b) => $this->transformTournamentCourtBooking($b));
+
+        $tournaments = \App\Models\Tournament::orderBy('start_date', 'desc')->get(['id', 'name']);
+
+        return Inertia::render('Reports/TournamentCourts', [
+            'bookings'    => $bookings,
+            'tournaments' => $tournaments,
+            'filters'     => $filters,
+            'stats'       => [
+                'total_count'  => $total_count,
+                'total_paid'   => $total_paid,
+                'total_unpaid' => $total_unpaid,
+            ],
+        ]);
+    }
+
+    public function exportTournamentCourtReport(Request $request)
+    {
+        $filters = $request->only(['tournament_id', 'user_search', 'payment_method', 'payment_status']);
+        $format  = $request->query('format', 'pdf');
+
+        $query = \App\Models\TournamentCourtBooking::with(['user:id,name,email', 'tournament:id,name']);
+
+        if (!empty($filters['tournament_id']) && $filters['tournament_id'] !== 'all') {
+            $query->where('tournament_id', $filters['tournament_id']);
+        }
+        if (!empty($filters['user_search'])) {
+            $search = $filters['user_search'];
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', fn($u) => $u->where('name', 'like', "%{$search}%"))
+                  ->orWhere('guest_name', 'like', "%{$search}%");
+            });
+        }
+        if (!empty($filters['payment_method']) && $filters['payment_method'] !== 'all') {
+            $query->where('payment_method', $filters['payment_method']);
+        }
+        if (!empty($filters['payment_status']) && $filters['payment_status'] !== 'all') {
+            $query->where('payment_status', $filters['payment_status']);
+        }
+
+        $bookings = $query->orderBy('created_at', 'desc')->get()
+            ->map(fn($b) => $this->transformTournamentCourtBooking($b));
+
+        if ($format === 'json') {
+            return response()->json($bookings);
+        }
+
+        if ($format === 'xlsx') {
+            $writer = SimpleExcelWriter::streamDownload('tournament_court_bookings.xlsx');
+            foreach ($bookings as $b) {
+                $writer->addRow([
+                    'Date'           => $b['booking_date'],
+                    'Tournament'     => $b['tournament_name'],
+                    'Customer'       => $b['customer'],
+                    'Type'           => $b['user_type'],
+                    'Slot'           => $b['schedule_type'],
+                    'Games'          => $b['games_count'],
+                    'Trainer'        => $b['with_trainer'],
+                    'Payment Method' => $b['payment_method'],
+                    'Reference'      => $b['payment_reference'],
+                    'Status'         => $b['payment_status'],
+                    'Amount'         => $b['total_amount'],
+                ]);
+            }
+            return $writer->toBrowser();
+        }
+
+        if ($format === 'pdf') {
+            $pdf = Pdf::loadView('reports.tournament_courts_pdf', ['bookings' => $bookings, 'filters' => $filters]);
+            return $pdf->download('tournament_court_bookings.pdf');
+        }
+    }
+
+    private function transformTournamentCourtBooking($b): array
+    {
+        return [
+            'id'                => $b->id,
+            'booking_date'      => $b->booking_date,
+            'tournament_name'   => $b->tournament?->name ?? '-',
+            'customer'          => $b->guest_name ?? $b->user?->name ?? 'Guest',
+            'user_type'         => $b->user_type_at_booking ?? ($b->guest_name ? 'Guest' : 'N/A'),
+            'schedule_type'     => ucfirst($b->schedule_type),
+            'games_count'       => $b->games_count,
+            'with_trainer'      => $b->with_trainer ? 'Yes' : 'No',
+            'payment_method'    => ucfirst($b->payment_method),
+            'payment_reference' => $b->payment_reference,
+            'payment_status'    => ucfirst($b->payment_status),
+            'total_amount'      => number_format($b->total_amount, 2),
+        ];
     }
 
     public function tournamentParticipants(Request $request, \App\Models\Tournament $tournament)

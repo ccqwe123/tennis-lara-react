@@ -10,7 +10,7 @@ import {
 } from "@/Components/ui/table"
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card"
 import { Input } from "@/Components/ui/input"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import {
     Pagination,
     PaginationContent,

@@ -16,7 +16,7 @@ import {
     PaginationNext,
     PaginationPrevious,
 } from "@/Components/ui/pagination"
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Input } from "@/Components/ui/input"
 import {
     Dialog,
@@ -27,6 +27,7 @@ import {
     DialogTitle,
 } from "@/Components/ui/dialog"
 import { toast } from "sonner"
+import { BookTournamentCourtModal } from "@/Components/BookTournamentCourtModal"
 
 const PIE_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#ef4444"]
 
@@ -118,6 +119,7 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
     const [isConfirmTournamentOpen, setIsConfirmTournamentOpen] = useState(false)
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [bookingType, setBookingType] = useState<'booking' | 'tournament' | null>(null)
+    const [showBookTournamentCourtModal, setShowBookTournamentCourtModal] = useState(false)
 
 
     const openConfirm = (record: Booking) => {
@@ -140,7 +142,7 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
             ? 'payments.verify.booking.pay'
             : 'payments.verify.tournament.pay'
 
-        router.post(route(routeName, selectedRecord.id), { status }, {
+        router.post(route(routeName, selectedRecord.id), { status: "paid" }, {
             preserveScroll: true,
             preserveState: true,
             onSuccess: () => {
@@ -165,7 +167,7 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
             ? 'payments.verify.booking.pay'
             : 'payments.verify.tournament.pay'
 
-        router.post(route(routeName, selectedRecordTournament.id), { status }, {
+        router.post(route(routeName, selectedRecordTournament.id), { status: "paid" }, {
             preserveScroll: true,
             preserveState: true,
             onSuccess: () => {
@@ -487,23 +489,27 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
                             <div className="grid grid-cols-1 gap-2">
                                 <a href="/bookings/create" className="bg-primary text-white h-12 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
                                     <CalendarPlus className="mr-2 h-4 w-4" />
-                                    New Booking
+                                    New Court Booking
                                 </a>
                                 <a href="/tournaments/create" className="bg-yellow-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
                                     <Trophy className="mr-2 h-4 w-4" />
                                     Add Tournament
                                 </a>
-                                <a href="/payments/verify" className="bg-blue-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                <button onClick={() => setShowBookTournamentCourtModal(true)} className="bg-lime-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input px-4 py-2">
+                                    <CalendarPlus className="mr-2 h-4 w-4" />
+                                    Book Tournament Court
+                                </button>
+                                <a href="/payments/verify/tournament" className="bg-blue-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
                                     <Coins className="mr-2 h-4 w-4" />
-                                    Verify Payments
+                                    Verify Court Booking Payments
+                                </a>
+                                <a href="/payments/verify/tournament-court" className="bg-teal-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
+                                    <Users className="mr-2 h-4 w-4" />
+                                    Verify Tournament Court Booking
                                 </a>
                                 <a href="/memberships/create" className="bg-red-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
                                     <TicketPlus className="mr-2 h-4 w-4" />
                                     Add Memberships
-                                </a>
-                                <a href="/users" className="bg-black h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    User List
                                 </a>
                             </div>
                         </div>
@@ -616,8 +622,8 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
                 </Card>
             </div>
             {/* Quick Actions & Player List */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-                <Card className="col-span-5 h-full">
+            <div className="grid gap-4 md:grid-cols-7 lg:grid-cols-7">
+                <Card className="col-span-7 h-full">
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div>
@@ -707,44 +713,6 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
                         </div>
                     </CardContent>
                 </Card>
-                <Card className="col-span-5 md:col-span-2 h-full flex flex-col">
-                    <CardHeader>
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <CardTitle>Quick Actions</CardTitle>
-                                <CardDescription>
-                                    Perform quick actions
-                                </CardDescription>
-                            </div>
-                        </div>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="mt-6 pt-6 border-t">
-                            <div className="grid grid-cols-1 gap-2">
-                                <a href="/bookings/create" className="bg-primary text-white h-12 inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
-                                    <CalendarPlus className="mr-2 h-4 w-4" />
-                                    New Booking
-                                </a>
-                                <a href="/tournaments/create" className="bg-yellow-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
-                                    <Trophy className="mr-2 h-4 w-4" />
-                                    Add Tournament
-                                </a>
-                                <a href="/payments/verify" className="bg-blue-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
-                                    <Coins className="mr-2 h-4 w-4" />
-                                    Verify Payments
-                                </a>
-                                <a href="/memberships/create" className="bg-red-500 h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
-                                    <TicketPlus className="mr-2 h-4 w-4" />
-                                    Add Memberships
-                                </a>
-                                <a href="/users" className="bg-black h-12 text-white inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border border-input h-9 px-4 py-2">
-                                    <Users className="mr-2 h-4 w-4" />
-                                    User List
-                                </a>
-                            </div>
-                        </div>
-                    </CardContent>
-                </Card>
             </div>
 
             {/* Revenue vs Expenses Chart */}
@@ -808,6 +776,11 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
                     )}
                 </CardContent>
             </Card>
+
+            <BookTournamentCourtModal
+                open={showBookTournamentCourtModal}
+                onClose={() => setShowBookTournamentCourtModal(false)}
+            />
 
             {/* booking modal */}
             <Dialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>

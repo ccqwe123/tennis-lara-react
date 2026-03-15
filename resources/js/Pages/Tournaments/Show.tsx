@@ -2,10 +2,10 @@ import { useState } from "react"
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { Head, Link, useForm, router } from "@inertiajs/react"
 import { format } from "date-fns"
-import { Calendar, CheckCircle2, ChevronLeft, Trophy, Pencil, Check, Copy, Download, Banknote, CreditCard, Lock, AlertCircle } from "lucide-react"
+import { Calendar, CheckCircle2, ChevronLeft, Trophy, Pencil, Check, Copy, Download, Banknote, CreditCard, Lock, AlertCircle, BookOpen } from "lucide-react"
 import { toast } from "sonner"
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/Components/ui/card"
 import { Badge } from "@/Components/ui/badge"
 import {
@@ -43,10 +43,11 @@ interface PageProps {
         description?: string
     }
     myRegistration: Registration | null
+    myCourtBookingsCount: number
     gcashQrCode: string | null
 }
 
-export default function TournamentShow({ auth, tournament, myRegistration, gcashQrCode }: PageProps) {
+export default function TournamentShow({ auth, tournament, myRegistration, myCourtBookingsCount, gcashQrCode }: PageProps) {
     const [open, setOpen] = useState(false)
     const [showPaymentDialog, setShowPaymentDialog] = useState(false)
     const [copied, setCopied] = useState(false)
@@ -197,6 +198,28 @@ export default function TournamentShow({ auth, tournament, myRegistration, gcash
                                                 >
                                                     Pay Now - ₱{parseFloat(tournament.registration_fee).toFixed(2)}
                                                 </Button>
+                                            )}
+
+                                            {myRegistration.payment_status === 'paid' && (
+                                                <>
+                                                    <Button
+                                                        className="w-full bg-emerald-600 hover:bg-emerald-700"
+                                                        onClick={() => router.visit(route('tournaments.book-court', tournament.id))}
+                                                    >
+                                                        <BookOpen className="h-4 w-4 mr-2" />
+                                                        Book Court
+                                                    </Button>
+
+                                                    {myCourtBookingsCount > 0 && (
+                                                        <Button
+                                                            variant="outline"
+                                                            className="w-full"
+                                                            onClick={() => router.visit(route('tournaments.my-court-bookings', tournament.id))}
+                                                        >
+                                                            My Court Bookings ({myCourtBookingsCount})
+                                                        </Button>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                     ) : (

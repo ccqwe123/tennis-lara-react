@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 
 declare var route: any;
 
-import { ButtonCustom as Button } from "@/Components/ui/button-custom"
+import { Button } from "@/Components/ui/button"
 import ApplicationLogo from "@/Components/ApplicationLogo"
 import {
     Card,
@@ -256,7 +256,7 @@ export default function TournamentParticipants({ auth, tournament, participants,
                                         <SelectItem value="all">All Statuses</SelectItem>
                                         <SelectItem value="paid">Paid</SelectItem>
                                         <SelectItem value="pending">Pending</SelectItem>
-                                        <SelectItem value="failed">Failed</SelectItem>
+                                        <SelectItem value="cancelled">Cancelled</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -271,8 +271,7 @@ export default function TournamentParticipants({ auth, tournament, participants,
                                     <SelectContent>
                                         <SelectItem value="all">All Methods</SelectItem>
                                         <SelectItem value="cash">Cash</SelectItem>
-                                        <SelectItem value="online">Online</SelectItem>
-                                        <SelectItem value="card">Card</SelectItem>
+                                        <SelectItem value="gcash">GCash</SelectItem>
                                     </SelectContent>
                                 </Select>
                             </div>

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\CourtBooking;
+use App\Models\Tournament;
+use App\Models\TournamentCourtBooking;
 use App\Models\TournamentRegistration;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -10,136 +12,145 @@ use Carbon\Carbon;
 
 class PaymentVerificationController extends Controller
 {
-    public function index(Request $request)
+    private function resolveDate(Request $request, bool $isAdmin): string
     {
-        info($request);
+        $date = $request->input('date', Carbon::today()->toDateString());
+        return $isAdmin ? $date : Carbon::today()->toDateString();
+    }
+
+    public function courtBookings(Request $request)
+    {
         $user = $request->user();
         $isAdmin = $user->isAdmin();
+        $date = $this->resolveDate($request, $isAdmin);
 
-        // Default to today
-        $date = $request->input('date', Carbon::today()->toDateString());
+        $transform = fn($b) => [
+            'id' => $b->id,
+            'reference' => $b->payment_reference,
+            'customer' => $b->user ? $b->user->name : 'Guest',
+            'amount' => $b->total_amount,
+            'date' => $b->booking_date,
+            'details' => $b->schedule_type,
+            'category' => $b->category,
+            'type' => 'booking',
+            'method' => $b->payment_method ? ucfirst($b->payment_method) : '-',
+        ];
 
-        // If not admin, force date to today
-        if (!$isAdmin) {
-            $date = Carbon::today()->toDateString();
-        }
+        $q = CourtBooking::with('user')->when($date, fn($q) => $q->whereDate('booking_date', $date))->orderBy('created_at', 'desc');
 
-        $baseQuery = CourtBooking::with('user');
-        if ($date) {
-            $baseQuery->whereDate('booking_date', $date);
-        }
-        $baseQuery->orderBy('created_at', 'desc');
-        $paidBookings = (clone $baseQuery)
-            ->where('payment_status', 'paid')
-            ->get()
-            ->transform(function ($booking) {
-                return [
-                    'id' => $booking->id,
-                    'reference' => $booking->payment_reference,
-                    'customer' => $booking->user ? $booking->user->name : 'Guest',
-                    'amount' => $booking->total_amount,
-                    'status' => ucfirst($booking->payment_status),
-                    'date' => $booking->booking_date,
-                    'details' => "Court Booking - " . $booking->schedule_type,
-                    'category' => $booking->category,
-                    'type' => 'booking',
-                    'method' => $booking->payment_method ? ucfirst($booking->payment_method) : '-',
-                ];
-            });
-
-        $unpaidBookings = (clone $baseQuery)
-            ->where('payment_status', '!=', 'paid')
-            ->get()
-            ->transform(function ($booking) {
-                return [
-                    'id' => $booking->id,
-                    'reference' => $booking->payment_reference,
-                    'customer' => $booking->user ? $booking->user->name : 'Guest',
-                    'amount' => $booking->total_amount,
-                    'status' => ucfirst($booking->payment_status),
-                    'date' => $booking->booking_date,
-                    'details' => "Court Booking - " . $booking->time_slot,
-                    'category' => $booking->category,
-                    'type' => 'booking',
-                    'method' => $booking->payment_method ? ucfirst($booking->payment_method) : '-',
-                ];
-            });
-
-        $tournamentsQuery = TournamentRegistration::with(['user', 'tournament']);
-        if ($date) {
-            $tournamentsQuery->whereDate('created_at', $date);
-        }
-        $tournamentsQuery->orderBy('created_at', 'desc');
-
-        // Clone queries for separate filters
-        $paidTournament = (clone $tournamentsQuery)->where('payment_status', 'paid');
-        $unpaidTournament = (clone $tournamentsQuery)->where('payment_status', 'unpaid');
-
-        // Paid registrations
-        $registrations = $paidTournament->get()->transform(function ($reg) {
-            return [
-                'id' => $reg->id,
-                'reference' => $reg->payment_reference,
-                'customer' => $reg->user ? $reg->user->name : 'Unknown',
-                'amount' => $reg->amount_paid > 0 ? $reg->amount_paid : $reg->tournament->registration_fee,
-                'expected_amount' => $reg->tournament->registration_fee,
-                'status' => ucfirst($reg->payment_status),
-                'date' => $reg->created_at->format('Y-m-d'),
-                'details' => $reg->tournament->name,
-                'type' => 'tournament',
-                'method' => $reg->payment_method ? ucfirst($reg->payment_method) : '-',
-            ];
-        });
-
-        // Unpaid registrations
-        $unpaidRegistrations = $unpaidTournament->get()->transform(function ($reg) {
-            return [
-                'id' => $reg->id,
-                'reference' => $reg->payment_reference,
-                'customer' => $reg->user ? $reg->user->name : 'Unknown',
-                'amount' => $reg->amount_paid > 0 ? $reg->amount_paid : $reg->tournament->registration_fee,
-                'expected_amount' => $reg->tournament->registration_fee,
-                'status' => ucfirst($reg->payment_status),
-                'date' => $reg->created_at->format('Y-m-d'),
-                'details' => $reg->tournament->name,
-                'type' => 'tournament',
-                'method' => $reg->payment_method ? ucfirst($reg->payment_method) : '-',
-            ];
-        });
-
-
-        return Inertia::render('Payments/Verify', [
-            'bookings' => $unpaidBookings,
-            'registrations' => $unpaidRegistrations,
-            'paid_bookings' => $paidBookings,
-            'paid_registrations' => $registrations,
-            'filters' => [
-                'date' => $date,
-                'tab' => $request->input('tab', 'bookings'),
-            ],
-            'isAdmin' => $isAdmin,
+        return Inertia::render('Payments/VerifyCourt', [
+            'unpaid'    => (clone $q)->where('payment_status', 'pending')->get()->transform($transform),
+            'paid'      => (clone $q)->where('payment_status', 'paid')->get()->transform($transform),
+            'cancelled' => (clone $q)->where('payment_status', 'cancelled')->get()->transform($transform),
+            'filters'   => ['date' => $date, 'tab' => $request->input('tab', 'unpaid')],
+            'isAdmin'   => $isAdmin,
         ]);
+    }
+
+    public function tournamentBookings(Request $request)
+    {
+        $user = $request->user();
+        $isAdmin = $user->isAdmin();
+        $date = $this->resolveDate($request, $isAdmin);
+
+        $transform = fn($r) => [
+            'id' => $r->id,
+            'reference' => $r->payment_reference,
+            'customer' => $r->user ? $r->user->name : 'Unknown',
+            'amount' => $r->amount_paid > 0 ? $r->amount_paid : $r->tournament->registration_fee,
+            'expected_amount' => $r->tournament->registration_fee,
+            'date' => $r->created_at->format('Y-m-d'),
+            'details' => $r->tournament->name,
+            'type' => 'tournament',
+            'method' => $r->payment_method ? ucfirst($r->payment_method) : '-',
+        ];
+
+        $q = TournamentRegistration::with(['user', 'tournament'])->when($date, fn($q) => $q->whereDate('created_at', $date))->orderBy('created_at', 'desc');
+
+        return Inertia::render('Payments/VerifyTournament', [
+            'unpaid'    => (clone $q)->where('payment_status', 'unpaid')->get()->transform($transform),
+            'paid'      => (clone $q)->where('payment_status', 'paid')->get()->transform($transform),
+            'cancelled' => (clone $q)->where('payment_status', 'cancelled')->get()->transform($transform),
+            'filters'   => ['date' => $date, 'tab' => $request->input('tab', 'unpaid')],
+            'isAdmin'   => $isAdmin,
+        ]);
+    }
+
+    public function tournamentCourtBookings(Request $request)
+    {
+        $user = $request->user();
+        $isAdmin = $user->isAdmin();
+        $date = $this->resolveDate($request, $isAdmin);
+        $tournamentId = $request->input('tournament_id');
+
+        $transform = fn($b) => [
+            'id' => $b->id,
+            'reference' => $b->payment_reference,
+            'customer' => $b->guest_name ?? ($b->user ? $b->user->name : 'Guest'),
+            'tournament_name' => $b->tournament->name,
+            'amount' => $b->total_amount,
+            'date' => $b->booking_date,
+            'method' => $b->payment_method ? ucfirst($b->payment_method) : '-',
+        ];
+
+        $q = TournamentCourtBooking::with(['user', 'tournament'])
+            ->when($date, fn($q) => $q->whereDate('booking_date', $date))
+            ->when($tournamentId, fn($q) => $q->where('tournament_id', $tournamentId))
+            ->orderBy('created_at', 'desc');
+
+        $tournaments = Tournament::orderBy('name')->get()->map(fn($t) => ['id' => $t->id, 'name' => $t->name]);
+
+        return Inertia::render('Payments/VerifyTournamentCourt', [
+            'unpaid'      => (clone $q)->where('payment_status', 'pending')->get()->transform($transform),
+            'paid'        => (clone $q)->where('payment_status', 'paid')->get()->transform($transform),
+            'cancelled'   => (clone $q)->where('payment_status', 'cancelled')->get()->transform($transform),
+            'tournaments' => $tournaments,
+            'filters'     => ['date' => $date, 'tab' => $request->input('tab', 'unpaid'), 'tournament_id' => $tournamentId],
+            'isAdmin'     => $isAdmin,
+        ]);
+    }
+
+    public function markTournamentCourtBookingPaid(Request $request, TournamentCourtBooking $booking)
+    {
+        $booking->update([
+            'payment_status' => $request->status,
+            'staff_id' => $request->user()->id,
+        ]);
+
+        \App\Services\ActivityLogger::log('payment_verify_tournament_court', "{$request->user()->type->label()} marked tournament court booking {$booking->payment_reference} as {$request->status}", $booking);
+
+        if ($booking->user) {
+            $booking->user->notify(new \App\Notifications\PaymentStatusNotification(
+                $request->status === 'pending' ? 'Payment Pending' : 'Payment Confirmed',
+                $request->status === 'pending'
+                    ? 'Your tournament court booking ' . $booking->payment_reference . ' has been marked as pending.'
+                    : 'Your tournament court booking ' . $booking->payment_reference . ' has been confirmed.',
+                '/tournaments/' . $booking->tournament_id . '/my-court-bookings'
+            ));
+        }
+
+        return redirect()->back()->with('success', 'Booking payment updated.');
     }
 
     public function markBookingPaid(Request $request, CourtBooking $booking)
     {
 
         $booking->update([
-            'payment_status' => $request->status == 'paid' ? 'pending' : 'paid',
+            'payment_status' => $request->status,
             'staff_id' => $request->user()->id,
-            'payment_method' => 'cash', // Defaulting to cash for manual verification
+            'payment_method' => 'cash',
         ]);
 
-        if ($request->status == 'paid') {
-            \App\Services\ActivityLogger::log('payment_verify_booking', "{$request->user()->type->label()} they payment status mark as pending for booking {$booking->payment_reference}", $booking);
+        if ($request->status === 'pending') {
+            \App\Services\ActivityLogger::log('payment_verify_booking', "{$request->user()->type->label()} marked payment as pending for booking {$booking->payment_reference}", $booking);
         } else {
-            \App\Services\ActivityLogger::log('payment_verify_booking', "{$request->user()->type->label()} they payment status mark as paid for booking {$booking->payment_reference}", $booking);
+            \App\Services\ActivityLogger::log('payment_verify_booking', "{$request->user()->type->label()} marked payment as paid for booking {$booking->payment_reference}", $booking);
         }
 
         if ($booking->user) {
             $booking->user->notify(new \App\Notifications\PaymentStatusNotification(
-                $request->status == 'paid' ? 'Payment Pending' : 'Payment Confirmed',
-                $request->status == 'paid' ? 'Your payment for booking ' . $booking->payment_reference . ' has been marked as pending.' : 'Your payment for booking ' . $booking->payment_reference . ' has been confirmed.',
+                $request->status === 'pending' ? 'Payment Pending' : 'Payment Confirmed',
+                $request->status === 'pending' ? 'Your payment for booking ' . $booking->payment_reference . ' has been marked as pending.' : 'Your payment for booking ' . $booking->payment_reference . ' has been confirmed.',
                 '/my-bookings'
             ));
         }
@@ -149,26 +160,28 @@ class PaymentVerificationController extends Controller
 
     public function markTournamentRegistrationPaid(Request $request, TournamentRegistration $registration)
     {
+        info($request->all());
+        info($registration);
         $registration->update([
-            'payment_status' => $request->status == 'paid' ? 'unpaid' : 'paid',
+            'payment_status' => $request->status,
             'staff_id' => $request->user()->id,
             'payment_method' => 'cash',
         ]);
 
-        if ($request->status == 'paid') {
-            \App\Services\ActivityLogger::log('payment_verify_tournament', "{$request->user()->type->label()} they payment status mark as pending for tournament registration {$registration->payment_reference}", $registration);
+        if ($request->status === 'unpaid') {
+            \App\Services\ActivityLogger::log('payment_verify_tournament', "{$request->user()->type->label()} marked payment as unpaid for tournament registration {$registration->payment_reference}", $registration);
         } else {
-            \App\Services\ActivityLogger::log('payment_verify_tournament', "{$request->user()->type->label()} they payment status mark as paid for tournament registration {$registration->payment_reference}", $registration);
+            \App\Services\ActivityLogger::log('payment_verify_tournament', "{$request->user()->type->label()} marked payment as paid for tournament registration {$registration->payment_reference}", $registration);
         }
 
         if ($registration->user) {
             $registration->user->notify(new \App\Notifications\PaymentStatusNotification(
-                $request->status == 'paid' ? 'Payment Pending' : 'Payment Confirmed',
-                $request->status == 'paid' ? 'Your payment for tournament registration ' . $registration->payment_reference . ' has been marked as pending.' : 'Your payment for tournament registration ' . $registration->payment_reference . ' has been confirmed.',
+                $request->status === 'unpaid' ? 'Payment Unpaid' : 'Payment Confirmed',
+                $request->status === 'unpaid' ? 'Your payment for tournament registration ' . $registration->payment_reference . ' has been marked as unpaid.' : 'Your payment for tournament registration ' . $registration->payment_reference . ' has been confirmed.',
                 '/tournaments/' . $registration->tournament_id
             ));
         }
 
-        return redirect()->back()->with('success', 'Registration marked as paid.');
+        return redirect()->back()->with('success', 'Registration updated.');
     }
 }
