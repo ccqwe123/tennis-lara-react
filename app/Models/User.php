@@ -25,8 +25,10 @@ class User extends Authenticatable
         'password',
         'type',
         'avatar',
+        'is_lifetime',
         'phone',
         'player_level',
+        'membership_status',
     ];
 
     public function bookings()

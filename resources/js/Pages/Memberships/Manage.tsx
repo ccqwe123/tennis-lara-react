@@ -56,13 +56,15 @@ interface PageProps {
         data: {
             id: number
             name: string
-            email: string
+            username: string
             type: string
             membership_status: string
             current_plan: string
             subscription_id: number | null
             start_date: string
             expiry_date: string
+            start_date_raw: string
+            expiry_date_raw: string
             is_expiring: boolean
         }[]
         links: any[]
@@ -131,18 +133,13 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
 
         const parseDate = (dateStr: string) => {
             if (!dateStr || dateStr === '-' || dateStr === 'Lifetime') return ''
-            const date = new Date(dateStr)
-            if (isNaN(date.getTime())) return ''
-            // Adjust for local timezone offset to prevent date shifting
-            const offset = date.getTimezoneOffset()
-            const adjustedDate = new Date(date.getTime() - (offset * 60 * 1000))
-            return adjustedDate.toISOString().split('T')[0]
+            return dateStr
         }
 
         setFormData({
             type: user.current_plan === 'None' ? 'annual' : user.current_plan.toLowerCase(),
-            start_date: parseDate(user.start_date),
-            end_date: parseDate(user.expiry_date)
+            start_date: parseDate(user.start_date_raw),
+            end_date: parseDate(user.expiry_date_raw)
         })
         setIsDialogOpen(true)
     }
@@ -287,7 +284,7 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
                                                             </span>
                                                         )}
                                                     </div>
-                                                    <div className="text-sm text-gray-500">{user.email}</div>
+                                                    <div className="text-sm text-gray-500">{user.username}</div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <Badge
@@ -427,7 +424,7 @@ export default function MembershipManage({ auth, users, filters }: PageProps) {
                                 type="date"
                                 value={formData.end_date}
                                 onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                                disabled={formData.type === 'lifetime'}
+                                // disabled={formData.type === 'lifetime'}
                             />
                         </div>
                     </div>

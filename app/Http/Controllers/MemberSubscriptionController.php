@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\MemberSubscription;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\IncomeService;
 use Inertia\Inertia;
 
 class MemberSubscriptionController extends Controller
@@ -110,13 +111,15 @@ class MemberSubscriptionController extends Controller
             return [
                 'id' => $u->id,
                 'name' => $u->name,
-                'email' => $u->email,
+                'username' => $u->username,
                 'type' => $u->type,
                 'membership_status' => $u->membership_status,
                 'current_plan' => $sub ? ucfirst($sub->type) : 'None',
                 'subscription_id' => $sub ? $sub->id : null,
                 'start_date' => $sub ? $sub->start_date->format('M d, Y') : '-',
                 'expiry_date' => $expiryDate ? $expiryDate->format('M d, Y') : ($sub && !$sub->end_date ? 'Lifetime' : '-'),
+                'start_date_raw' => $sub ? $sub->start_date->format('Y-m-d') : '',
+                'expiry_date_raw' => $expiryDate ? $expiryDate->format('Y-m-d') : '',
                 'is_expiring' => $isExpiring,
             ];
         });
@@ -146,6 +149,7 @@ class MemberSubscriptionController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'type' => $user->type,
+                'is_lifetime' => $user->is_lifetime,
                 'membership_status' => $user->membership_status,
                 'email' => $user->email,
             ];
@@ -177,12 +181,12 @@ class MemberSubscriptionController extends Controller
         $endDate = match ($request->type) {
             'annual' => now()->addYear(),
             'monthly' => now()->addMonth(),
-            'lifetime' => null,
+            'lifetime' => now()->addMonth(),
         };
-
+        info($endDate);
         MemberSubscription::create([
             'user_id' => $userId,
-            'staff_id' => $isStaff ? auth()->id() : null, // Record staff if actioned by staff
+            'staff_id' => $isStaff ? auth()->id() : null,
             'type' => $request->type,
             'start_date' => $startDate,
             'end_date' => $endDate,
@@ -194,6 +198,9 @@ class MemberSubscriptionController extends Controller
         // Auto-upgrade user status
         $user = User::find($userId);
         $user->membership_status = 'member';
+        if($request->type === 'lifetime') {
+            $user->is_lifetime = true;
+        }
         if ($user->type !== \App\Enums\UserType::STUDENT) {
             $user->type = \App\Enums\UserType::MEMBER;
         }
@@ -202,6 +209,7 @@ class MemberSubscriptionController extends Controller
         $subscription = MemberSubscription::where('user_id', $userId)->latest()->first();
         if ($subscription) {
             $user->notify(new \App\Notifications\MembershipStatusNotification($subscription, 'active'));
+            IncomeService::record('membership', $subscription->id, ucfirst($request->type) . ' Membership - ' . User::find($userId)->name, $amount);
         }
 
         return redirect()->route('memberships.index')->with('success', 'Membership upgrade successful!');
@@ -238,7 +246,7 @@ class MemberSubscriptionController extends Controller
             $subscription->update([
                 'type' => $validated['type'],
                 'start_date' => $validated['start_date'],
-                'end_date' => $validated['type'] === 'lifetime' ? null : $validated['end_date'],
+                'end_date' => $validated['end_date'],
             ]);
         }
 

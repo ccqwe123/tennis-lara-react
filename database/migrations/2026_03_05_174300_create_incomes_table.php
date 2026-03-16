@@ -12,11 +12,6 @@ return new class extends Migration {
     {
         Schema::create('incomes', function (Blueprint $table) {
             $table->id();
-            $table->date('date');
-            $table->string('item');
-            $table->string('receipt_no')->nullable();
-            $table->string('notes')->nullable();
-            $table->decimal('amount', 10, 2);
             $table->timestamps();
         });
     }

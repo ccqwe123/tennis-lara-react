@@ -144,4 +144,39 @@ Route::middleware(['auth'])->group(function () {
     });
 });
 
+
+// TEMP TEST ROUTES - remove after testing
+Route::get('/test/membership-expiry-seed', function () {
+    $user = App\Models\User::where('id', 3)->first();
+    $admin = App\Models\User::where('type', 'admin')->first();
+    if (!$user) return 'No non-admin user found.';
+    App\Models\MemberSubscription::create([
+        'user_id' => $user->id,
+        'staff_id' => $admin->id,
+        'type' => 'monthly',
+        'start_date' => now()->subDays(30),
+        'end_date' => now()->addDays(3),
+        'payment_method' => 'cash',
+        'payment_status' => 'paid',
+        'amount_paid' => 500,
+    ]);
+    App\Models\MemberSubscription::create([
+        'user_id' => $user->id,
+        'staff_id' => $admin->id,
+        'type' => 'annual',
+        'start_date' => now()->subYear(),
+        'end_date' => now()->subDays(2),
+        'payment_method' => 'cash',
+        'payment_status' => 'paid',
+        'amount_paid' => 2000,
+    ]);
+    return 'Test subscriptions created for user: ' . $user->name . ' (type: ' . $user->type->value . ')';
+})->middleware('auth');
+
+Route::get('/test/membership-expiry-run', function () {
+    \Illuminate\Support\Facades\Cache::forget('membership_expiry_checked');
+    (new App\Http\Middleware\CheckMembershipExpiry())->checkExpiry();
+    return 'Expiry check ran. Check your notifications.';
+})->middleware('auth');
+
 require __DIR__ . '/auth.php';

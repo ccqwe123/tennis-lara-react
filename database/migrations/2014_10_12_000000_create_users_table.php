@@ -16,6 +16,7 @@ return new class extends Migration {
             $table->string('username')->unique();
             $table->string('email')->unique()->nullable();
             $table->timestamp('email_verified_at')->nullable();
+            $table->boolean('is_lifetime')->default(false);
             $table->string('password');
             $table->string('avatar')->nullable();
             $table->string('type')->default('non-member');

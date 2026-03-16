@@ -16,13 +16,17 @@ class MemberSubscription extends Model
         'payment_method',
         'payment_reference',
         'payment_status',
-        'amount_paid'
+        'amount_paid',
+        'notified_expiring_at',
+        'notified_expired_at',
     ];
 
     protected $casts = [
         'start_date' => 'date',
         'end_date' => 'date',
         'amount_paid' => 'decimal:2',
+        'notified_expiring_at' => 'datetime',
+        'notified_expired_at' => 'datetime',
     ];
 
     public function user()

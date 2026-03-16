@@ -11,9 +11,20 @@ class Income extends Model
 
     protected $fillable = [
         'date',
+        'source_type',
+        'source_id',
         'item',
         'receipt_no',
         'notes',
         'amount',
     ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
+    public function source()
+    {
+        return $this->morphTo();
+    }
 }

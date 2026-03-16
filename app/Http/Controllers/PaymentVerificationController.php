@@ -6,6 +6,7 @@ use App\Models\CourtBooking;
 use App\Models\Tournament;
 use App\Models\TournamentCourtBooking;
 use App\Models\TournamentRegistration;
+use App\Services\IncomeService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Carbon\Carbon;
@@ -117,6 +118,10 @@ class PaymentVerificationController extends Controller
             'staff_id' => $request->user()->id,
         ]);
 
+        if ($request->status === 'paid') {
+            IncomeService::record('tournament_court_booking', $booking->id, 'Tournament Court Booking - ' . $booking->payment_reference, $booking->total_amount, $booking->booking_date);
+        }
+
         \App\Services\ActivityLogger::log('payment_verify_tournament_court', "{$request->user()->type->label()} marked tournament court booking {$booking->payment_reference} as {$request->status}", $booking);
 
         if ($booking->user) {
@@ -140,6 +145,10 @@ class PaymentVerificationController extends Controller
             'staff_id' => $request->user()->id,
             'payment_method' => 'cash',
         ]);
+
+        if ($request->status === 'paid') {
+            IncomeService::record('court_booking', $booking->id, 'Court Booking - ' . $booking->payment_reference, $booking->total_amount, $booking->booking_date);
+        }
 
         if ($request->status === 'pending') {
             \App\Services\ActivityLogger::log('payment_verify_booking', "{$request->user()->type->label()} marked payment as pending for booking {$booking->payment_reference}", $booking);
@@ -167,6 +176,11 @@ class PaymentVerificationController extends Controller
             'staff_id' => $request->user()->id,
             'payment_method' => 'cash',
         ]);
+
+        if ($request->status === 'paid') {
+            $amount = $registration->amount_paid > 0 ? $registration->amount_paid : $registration->tournament->registration_fee;
+            IncomeService::record('tournament_registration', $registration->id, 'Tournament Registration - ' . $registration->payment_reference, $amount);
+        }
 
         if ($request->status === 'unpaid') {
             \App\Services\ActivityLogger::log('payment_verify_tournament', "{$request->user()->type->label()} marked payment as unpaid for tournament registration {$registration->payment_reference}", $registration);

@@ -58,6 +58,7 @@ interface PageProps {
         id: number
         name: string
         type: string
+        is_lifetime: boolean
         membership_status: string
         email: string
     }[]
@@ -267,9 +268,9 @@ export default function MembershipCreate({ auth, fees, users }: PageProps) {
                     <div className={cn("transition-all duration-500",
                         !selectedUserId ? "opacity-40 pointer-events-none blur-sm" : "opacity-100"
                     )}>
-                        <h3 className="text-xl font-bold mb-6 text-gray-800 px-1">2. Choose Membership Plan</h3>
-                        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-                            {plans.map((plan) => (
+                        <h3 className="text-xl font-bold mb-6 text-gray-800 px-1 text-center">2. Choose Membership Plan</h3>
+                        <div className="flex flex-wrap justify-center gap-8 [&>*]:w-full [&>*]:sm:w-80">
+                            {plans.filter(plan => targetUser?.is_lifetime ? plan.id !== 'lifetime' : plan.id === 'lifetime').map((plan) => (
                                 <Card
                                     key={plan.id}
                                     className={`flex flex-col relative border-2 transition-all hover:border-emerald-200 cursor-pointer ${plan.featured ? 'border-emerald-500 shadow-xl scale-105 z-10' : 'border-transparent shadow-md'}`}

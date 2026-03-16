@@ -14,25 +14,40 @@ class IncomeController extends Controller
         $date = request('date');
 
         if ($date) {
-            $incomes = Income::whereDate('date', $date)
-                ->latest('created_at')
-                ->get();
+            $incomes = Income::whereDate('date', $date)->get();
+
+            $sourceLabels = [
+                'court_booking'            => 'Court Booking',
+                'tournament_registration'  => 'Tournament Registration',
+                'tournament_court_booking' => 'Tournament Court Booking',
+                'membership'               => 'Membership',
+            ];
+
+            $grouped = $incomes
+                ->groupBy(fn($i) => $i->source_type ?? 'manual')
+                ->map(fn($group, $key) => [
+                    'source_type' => $key,
+                    'label'       => $sourceLabels[$key] ?? ucfirst(str_replace('_', ' ', $key)),
+                    'count'       => $group->count(),
+                    'total'       => $group->sum('amount'),
+                ])
+                ->values();
 
             return Inertia::render('Income/Index', [
-                'mode' => 'detail',
-                'date' => $date,
-                'incomes' => $incomes,
-                'total' => $incomes->sum('amount'),
+                'mode'    => 'detail',
+                'date'    => $date,
+                'grouped' => $grouped,
+                'total'   => $incomes->sum('amount'),
             ]);
         } else {
             $dailyIncomes = Income::query()
-                ->selectRaw('date, count(*) as count, sum(amount) as total')
-                ->groupBy('date')
+                ->selectRaw('DATE(date) as date, count(*) as count, sum(amount) as total')
+                ->groupByRaw('DATE(date)')
                 ->orderByDesc('date')
                 ->paginate(10);
 
             return Inertia::render('Income/Index', [
-                'mode' => 'summary',
+                'mode'         => 'summary',
                 'dailyIncomes' => $dailyIncomes,
             ]);
         }
