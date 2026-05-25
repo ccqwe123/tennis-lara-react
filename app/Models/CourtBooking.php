@@ -23,6 +23,7 @@ class CourtBooking extends Model
         'total_amount',
         'picker_selection',
         'priest_count',
+        'umpire_selection',
         'discount_applied',
         'user_type_at_booking',
     ];
@@ -33,6 +34,7 @@ class CourtBooking extends Model
         'total_amount' => 'decimal:2',
         'discount_applied' => 'decimal:2',
         'picker_selection' => 'array',
+        'umpire_selection' => 'array',
     ];
 
     public function user()

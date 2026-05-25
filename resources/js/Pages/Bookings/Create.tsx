@@ -6,6 +6,7 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon, Check, CreditCard, Banknote, Moon, Sun, ChevronsUpDown, User, Users } from "lucide-react"
 import { router } from "@inertiajs/react"
 import { toast } from "sonner"
+import { Head, usePage } from "@inertiajs/react"
 
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout"
 import { cn } from "@/lib/utils"
@@ -73,8 +74,10 @@ const formSchema = z.object({
     payment_method: z.enum(["cash", "gcash"]),
     is_guest: z.boolean(),
     picker_selection: z.array(z.boolean()),
+    umpire_selection: z.array(z.boolean()),
     category: z.enum(["single", "double"]),
     priest_count: z.number().min(0),
+    with_ball: z.boolean(),
 })
 
 export default function BookingCreate({ auth, settings, users, isStaff, isAdmin }: PageProps) {
@@ -119,8 +122,10 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
             booking_date: new Date(),
             is_guest: false,
             picker_selection: [false, false, false, false],
+            umpire_selection: [false, false, false, false],
             category: "single",
             priest_count: 0,
+            with_ball: false,
         },
     })
 
@@ -132,40 +137,65 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
         ? users.find(u => u.id === values.user_id)
         : (isStaff || isAdmin ? null : auth.user)
 
-    // Pricing
-    const getCourtRate = () => {
-        const type = selectedUser?.type || (isGuest ? 'non-member' : 'non-member')
-
-        if (type === 'student') return 45
-        if (type === 'member') {
-            return values.schedule_type === "day" ? 75 : 85
-        }
-        return 150 // Non-member / Guest
+    const parseSettingNumber = (key: string, fallback: number) => {
+        const parsed = parseFloat(settings[key] ?? "")
+        return Number.isFinite(parsed) ? parsed : fallback
     }
 
-    // Helper to get rate for a specific slot based on user type
+    const playerType = (selectedUser?.type || (isGuest ? 'non-member' : 'non-member')).toLowerCase()
+    const isNonMember = playerType === 'non-member'
+    const defaultRateMatrix: Record<string, number> = {
+        student_day_single: 45,
+        student_day_double: 45,
+        student_night_single: 45,
+        student_night_double: 45,
+        member_day_single: 90,
+        member_day_double: 70,
+        member_night_single: 90,
+        member_night_double: 85,
+        non_member_day_single: 90,
+        non_member_day_double: 70,
+        non_member_night_single: 90,
+        non_member_night_double: 85,
+    }
+
+    const getMatrixRate = (type: string, slot: 'day' | 'night', category: 'single' | 'double') => {
+        const key = `fee_${type}_${slot}_${category}`.replace('-', '_')
+        const fallbackKey = `${type}_${slot}_${category}`.replace('-', '_')
+        const fallback = defaultRateMatrix[fallbackKey] ?? 0
+        return parseSettingNumber(key, fallback)
+    }
+
+    const fallbackCourtFee = parseSettingNumber(
+        values.schedule_type === 'day' ? 'fee_court_day' : 'fee_court_night',
+        0
+    )
+    const courtFeePerGame = isNonMember ? parseSettingNumber('fee_non_member_court', fallbackCourtFee) : 0
+    const ballDiscountPerGame = values.with_ball ? parseSettingNumber('fee_ball_discount', 20) : 0
+    const baseCourtRate = getMatrixRate(playerType, values.schedule_type, values.category)
+    const courtRate = Math.max(0, baseCourtRate - ballDiscountPerGame + courtFeePerGame)
+
+    // Helper to preview slot base rates (excluding court fee and discounts).
     const getRateForSlot = (slot: 'day' | 'night') => {
-        const type = selectedUser?.type || (isGuest ? 'non-member' : 'non-member')
-
-        if (type === 'student') return 45
-        if (type === 'member') {
-            return slot === "day" ? 75 : 85
-        }
-        return 150 // Non-member / Guest
+        const slotBaseRate = getMatrixRate(playerType, slot, values.category)
+        return Math.max(0, slotBaseRate)
     }
-    const courtRate = getCourtRate()
-    const trainerFee = values.with_trainer ? parseFloat(settings.fee_trainer || "0") : 0
-    const basePickerFee = parseFloat(settings.fee_picker || "80")
-    const categoryDivisor = values.category === 'double' ? 4 : 2
-    const priestCount = values.priest_count || 0
-    const pickerDivisor = Math.max(1, categoryDivisor - priestCount)
-    const pickerFee = basePickerFee / pickerDivisor
+
+    const trainerFee = values.with_trainer ? parseSettingNumber("fee_trainer", 200) : 0
+    const pickerFee = parseSettingNumber("fee_picker", 40)
 
     // Calculate total picker fee based on selection and game count
     const activePickerCount = (values.picker_selection || []).slice(0, values.games_count).filter(Boolean).length
     const totalPickerFee = activePickerCount * pickerFee
 
-    const subtotal = (courtRate * values.games_count) + (trainerFee * values.games_count) + totalPickerFee
+    const umpireFee = parseSettingNumber("fee_umpire", 50)
+    const activeUmpireCount = (values.umpire_selection || []).slice(0, values.games_count).filter(Boolean).length
+    const totalUmpireFee = activeUmpireCount * umpireFee
+
+    const totalBaseCourtAmount = baseCourtRate * values.games_count
+    const totalBallDiscount = ballDiscountPerGame * values.games_count
+    const totalCourtFee = courtFeePerGame * values.games_count
+    const subtotal = (courtRate * values.games_count) + (trainerFee * values.games_count) + totalPickerFee + totalUmpireFee
     const total = subtotal
 
     const handleReviewBooking = async () => {
@@ -200,6 +230,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                 { label: 'Book Court' },
             ]}
         >
+            <Head title="Book Court" />
             <div className="py-8 bg-gray-50 min-h-screen" >
                 <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8" >
                     <Form {...form} >
@@ -405,7 +436,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                             <FormLabel className="gap-0 flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-0 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-28 justify-center" >
                                                                 <User className={cn("mb-2 h-6 w-6", field.value === 'single' ? "text-emerald-600" : "text-gray-400")} />
                                                                 <span className="font-bold text-base text-gray-900" > Single </span>
-                                                                <span className="text-xs text-gray-500 mt-1 text-center" > Picker split by 2 </span>
+                                                                <span className="text-xs text-gray-500 mt-1 text-center" > Standard rate </span>
                                                             </FormLabel>
                                                         </FormItem>
                                                         <FormItem >
@@ -415,7 +446,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                             <FormLabel className="gap-0 flex flex-col items-center justify-between rounded-xl border border-gray-200 bg-white p-0 hover:bg-gray-50 peer-data-[state=checked]:border-none peer-data-[state=checked]:ring-2 peer-data-[state=checked]:ring-emerald-500 peer-data-[state=checked]:bg-emerald-50 cursor-pointer shadow-sm transition-all h-28 justify-center" >
                                                                 <Users className={cn("mb-2 h-6 w-6", field.value === 'double' ? "text-emerald-600" : "text-gray-400")} />
                                                                 <span className="font-bold text-base text-gray-900" > Double </span>
-                                                                <span className="text-xs text-gray-500 mt-1 text-center" > Picker split by 4 </span>
+                                                                <span className="text-xs text-gray-500 mt-1 text-center" > Standard rate </span>
                                                             </FormLabel>
                                                         </FormItem>
                                                     </RadioGroup>
@@ -512,33 +543,69 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                     </div>
                                                 </FormControl>
 
-                                                {/* Picker Selection per Game */}
+                                                {/* Picker & Umpire Selection per Game */}
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2" >
                                                     {
                                                         Array.from({ length: field.value }).map((_, index) => (
-                                                            <FormField
-                                                                key={index}
-                                                                control={form.control}
-                                                                name={`picker_selection.${index}`}
-                                                                render={({ field: pickerField }) => (
-                                                                    <FormItem className="flex flex-row items-start space-x-3 space-y-0 rounded-md border p-4" >
-                                                                        <FormControl>
-                                                                            <Checkbox
-                                                                                checked={pickerField.value}
-                                                                                onCheckedChange={pickerField.onChange}
-                                                                            />
-                                                                        </FormControl>
-                                                                        <div className="space-y-1 leading-none" >
-                                                                            <FormLabel>
-                                                                                Game {index + 1}: With Picker(+₱{pickerFee.toFixed(2)})
-                                                                            </FormLabel>
-                                                                        </div>
-                                                                    </FormItem>
-                                                                )}
-                                                            />
+                                                            <div key={index} className="rounded-md border p-4 space-y-3">
+                                                                <p className="text-sm font-semibold text-gray-700">Game {index + 1}</p>
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`picker_selection.${index}`}
+                                                                    render={({ field: pickerField }) => (
+                                                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0" >
+                                                                            <FormControl>
+                                                                                <Checkbox
+                                                                                    checked={pickerField.value}
+                                                                                    onCheckedChange={pickerField.onChange}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <div className="space-y-1 leading-none" >
+                                                                                <FormLabel>With Picker (+₱{pickerFee.toFixed(2)})</FormLabel>
+                                                                            </div>
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                                <FormField
+                                                                    control={form.control}
+                                                                    name={`umpire_selection.${index}`}
+                                                                    render={({ field: umpireField }) => (
+                                                                        <FormItem className="flex flex-row items-start space-x-3 space-y-0" >
+                                                                            <FormControl>
+                                                                                <Checkbox
+                                                                                    checked={umpireField.value}
+                                                                                    onCheckedChange={umpireField.onChange}
+                                                                                />
+                                                                            </FormControl>
+                                                                            <div className="space-y-1 leading-none" >
+                                                                                <FormLabel>With Umpire (+₱{umpireFee.toFixed(2)})</FormLabel>
+                                                                            </div>
+                                                                        </FormItem>
+                                                                    )}
+                                                                />
+                                                            </div>
                                                         ))}
                                                 </div>
                                                 <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Optional Ball Discount Section */}
+                                    <FormField
+                                        control={form.control}
+                                        name="with_ball"
+                                        render={({ field }) => (
+                                            <FormItem className="flex items-center space-x-3 space-y-0 bg-slate-50 p-4 rounded-xl border border-slate-100" >
+                                                <FormControl>
+                                                    <Switch
+                                                        checked={field.value}
+                                                        onCheckedChange={field.onChange}
+                                                    />
+                                                </FormControl>
+                                                <div >
+                                                    <FormLabel className="font-medium text-gray-900" > With Ball(-₱{parseSettingNumber("fee_ball_discount", 20)}) </FormLabel>
+                                                </div>
                                             </FormItem>
                                         )}
                                     />
@@ -556,7 +623,7 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                                     />
                                                 </FormControl>
                                                 <div >
-                                                    <FormLabel className="font-medium text-gray-900" > Include Trainer(+₱{settings.fee_trainer}) </FormLabel>
+                                                    <FormLabel className="font-medium text-gray-900" > Include Training(+₱{parseSettingNumber("fee_trainer", 200)}) </FormLabel>
                                                 </div>
                                             </FormItem>
                                         )}
@@ -605,6 +672,12 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
 
                                     {/* Summary Section */}
                                     <div className="pt-8 border-t border-gray-100 space-y-4" >
+                                        {isNonMember && (
+                                            <div className="flex justify-between items-center text-gray-600" >
+                                                <span className="text-lg" > Court Fee({values.games_count} games) </span>
+                                                <span className="text-lg font-medium" >₱{totalCourtFee.toFixed(2)} </span>
+                                            </div>
+                                        )}
                                         <div className="flex justify-between items-center text-gray-600" >
                                             <span className="text-lg" > Subtotal({values.games_count} games) </span>
                                             <span className="text-lg font-medium" >₱{subtotal.toFixed(2)} </span>
@@ -703,6 +776,10 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                     <span className="text-gray-500" > With Trainer </span>
                                     <p className="font-medium text-gray-900" > {values.with_trainer ? "Yes" : "No"} </p>
                                 </div>
+                                <div >
+                                    <span className="text-gray-500" > With Ball </span>
+                                    <p className="font-medium text-gray-900" > {values.with_ball ? "Yes" : "No"} </p>
+                                </div>
                             </div>
                         </div>
 
@@ -721,13 +798,25 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
 
                             <div className="border-t border-gray-200 pt-3 space-y-2" >
                                 <div className="flex justify-between text-sm" >
-                                    <span className="text-gray-500" > Subtotal({values.games_count} games × ₱{courtRate.toFixed(2)}) </span>
-                                    <span className="font-medium" >₱{(courtRate * values.games_count).toFixed(2)} </span>
+                                    <span className="text-gray-500" > Base Rate({values.games_count} games × ₱{baseCourtRate.toFixed(2)}) </span>
+                                    <span className="font-medium" >₱{totalBaseCourtAmount.toFixed(2)} </span>
                                 </div>
+                                {values.with_ball && (
+                                    <div className="flex justify-between text-sm text-emerald-700" >
+                                        <span className="text-gray-500" > Ball Discount({values.games_count} games × -₱{ballDiscountPerGame.toFixed(2)}) </span>
+                                        <span className="font-medium" >-₱{totalBallDiscount.toFixed(2)} </span>
+                                    </div>
+                                )}
+                                {isNonMember && (
+                                    <div className="flex justify-between text-sm" >
+                                        <span className="text-gray-500" > Court Fee({values.games_count} games × ₱{courtFeePerGame.toFixed(2)}) </span>
+                                        <span className="font-medium" >₱{totalCourtFee.toFixed(2)} </span>
+                                    </div>
+                                )}
                                 {
                                     values.with_trainer && (
                                         <div className="flex justify-between text-sm" >
-                                            <span className="text-gray-500" > Trainer({values.games_count} games × ₱{trainerFee.toFixed(2)}) </span>
+                                            <span className="text-gray-500" > Training({values.games_count} games × ₱{trainerFee.toFixed(2)}) </span>
                                             <span className="font-medium" >₱{(trainerFee * values.games_count).toFixed(2)} </span>
                                         </div>
                                     )
@@ -740,6 +829,18 @@ export default function BookingCreate({ auth, settings, users, isStaff, isAdmin 
                                         </div>
                                     )
                                 }
+                                {
+                                    activeUmpireCount > 0 && (
+                                        <div className="flex justify-between text-sm" >
+                                            <span className="text-gray-500" > Umpire({activeUmpireCount} games × ₱{umpireFee.toFixed(2)}) </span>
+                                            <span className="font-medium" >₱{totalUmpireFee.toFixed(2)} </span>
+                                        </div>
+                                    )
+                                }
+                                <div className="flex justify-between text-sm" >
+                                    <span className="text-gray-500" > Subtotal </span>
+                                    <span className="font-medium" >₱{subtotal.toFixed(2)} </span>
+                                </div>
                                 <div className="flex justify-between pt-2 border-t border-gray-200" >
                                     <span className="text-lg font-bold text-gray-900" > Total </span>
                                     <span className="text-lg font-bold text-emerald-600" >₱{total.toFixed(2)} </span>

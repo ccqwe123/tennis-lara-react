@@ -138,10 +138,10 @@ export default function BookCourt({ auth, tournament, settings, gcashQrCode, isS
                                         <div className="space-y-2">
                                             <Label>Guest Name</Label>
                                             <Input
+                                                className="bg-white py-5 px-3 h-12 font-medium text-gray-900 text-sm"
                                                 placeholder="Enter guest name"
                                                 value={guestName}
                                                 onChange={(e) => setGuestName(e.target.value)}
-                                                className="bg-white"
                                             />
                                         </div>
                                     ) : (
@@ -152,7 +152,7 @@ export default function BookCourt({ auth, tournament, settings, gcashQrCode, isS
                                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-full p-0">
+                                            <PopoverContent className="p-0" style={{ width: 'var(--radix-popover-trigger-width)' }} align="start">
                                                 <Command>
                                                     <CommandInput placeholder="Search player..." />
                                                     <CommandList>

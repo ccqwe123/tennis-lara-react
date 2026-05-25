@@ -1,30 +1,12 @@
 <?php
 
-namespace Database\Seeders;
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
-use Illuminate\Database\Seeder;
-
-use App\Models\Setting;
-
-class StartUpSeeder extends Seeder
-{
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+return new class extends Migration {
+    public function up(): void
     {
         $settings = [
-            ['key' => 'fee_membership_annual', 'value' => '1000', 'description' => 'Annual Membership Fee'],
-            ['key' => 'fee_membership_monthly', 'value' => '100', 'description' => 'Monthly Membership Fee'],
-            ['key' => 'fee_membership_lifetime', 'value' => '5000', 'description' => 'Lifetime Membership Fee'],
-            ['key' => 'fee_court_day', 'value' => '100', 'description' => 'Court Rate (Day/Game)'],
-            ['key' => 'fee_court_night', 'value' => '150', 'description' => 'Court Rate (Night/Game)'],
-            ['key' => 'fee_trainer', 'value' => '200', 'description' => 'Trainer Fee (Per Game)'],
-            ['key' => 'fee_tournament_base', 'value' => '500', 'description' => 'Base Tournament Fee'],
-            ['key' => 'discount_member_rate', 'value' => '0.10', 'description' => 'Member Discount Rate (Decimal)'],
-            ['key' => 'fee_picker', 'value' => '40', 'description' => 'Picker/Ball Boy Fee (Per Game)'],
-            ['key' => 'fee_umpire', 'value' => '50', 'description' => 'Umpire Fee (Per Game)'],
             ['key' => 'fee_student_day_single', 'value' => '45', 'description' => 'Student Rate - Day - Single'],
             ['key' => 'fee_student_day_double', 'value' => '45', 'description' => 'Student Rate - Day - Double'],
             ['key' => 'fee_student_night_single', 'value' => '45', 'description' => 'Student Rate - Night - Single'],
@@ -42,7 +24,35 @@ class StartUpSeeder extends Seeder
         ];
 
         foreach ($settings as $setting) {
-            Setting::firstOrCreate(['key' => $setting['key']], $setting);
+            DB::table('settings')->updateOrInsert(
+                ['key' => $setting['key']],
+                [
+                    'value' => $setting['value'],
+                    'description' => $setting['description'],
+                    'updated_at' => now(),
+                    'created_at' => now(),
+                ]
+            );
         }
     }
-}
+
+    public function down(): void
+    {
+        DB::table('settings')->whereIn('key', [
+            'fee_student_day_single',
+            'fee_student_day_double',
+            'fee_student_night_single',
+            'fee_student_night_double',
+            'fee_member_day_single',
+            'fee_member_day_double',
+            'fee_member_night_single',
+            'fee_member_night_double',
+            'fee_non_member_day_single',
+            'fee_non_member_day_double',
+            'fee_non_member_night_single',
+            'fee_non_member_night_double',
+            'fee_non_member_court',
+            'fee_ball_discount',
+        ])->delete();
+    }
+};

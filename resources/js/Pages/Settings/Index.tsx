@@ -22,6 +22,30 @@ interface PageProps {
     gcashQrCode: string | null
 }
 
+const SETTING_CATEGORIES = [
+    {
+        title: "General Fees",
+        description: "Core fees used across bookings and memberships.",
+        match: (setting: { key: string; description: string }) => {
+            const text = `${setting.key} ${setting.description}`.toLowerCase()
+            return text.includes("membership") || text.includes("fee_non_member_court") || text.includes("court fee")
+        }
+    },
+    {
+        title: "Court Rate Fees",
+        description: "Court pricing based on time schedule (day/night).",
+        match: (setting: { key: string; description: string }) => {
+            const text = `${setting.key} ${setting.description}`.toLowerCase()
+            return text.includes("court") || text.includes("day") || text.includes("night")
+        }
+    },
+    {
+        title: "Other Settings",
+        description: "Additional configurable values.",
+        match: () => true
+    }
+]
+
 export default function SettingsIndex({ auth, settings, gcashQrCode }: PageProps) {
     const { data, setData, post, processing, recentlySuccessful } = useForm({
         settings: settings.map(s => ({
@@ -83,6 +107,27 @@ export default function SettingsIndex({ auth, settings, gcashQrCode }: PageProps
         })
     }
 
+    const categorizedSettings = (() => {
+        const assignedKeys = new Set<string>()
+
+        return SETTING_CATEGORIES.map((category, index) => {
+            const items = data.settings.filter(setting => {
+                if (assignedKeys.has(setting.key)) return false
+                if (!category.match(setting)) return false
+                return true
+            }).map(setting => {
+                assignedKeys.add(setting.key)
+                return setting
+            })
+
+            return {
+                ...category,
+                key: `category-${index}`,
+                items
+            }
+        }).filter(category => category.items.length > 0)
+    })()
+
     return (
         <AuthenticatedLayout
             header={<h2 className="font-semibold text-xl text-gray-800 leading-tight">System Settings</h2>}
@@ -101,23 +146,34 @@ export default function SettingsIndex({ auth, settings, gcashQrCode }: PageProps
                             <CardHeader>
                                 <CardTitle>Pricing Configuration</CardTitle>
                                 <CardDescription>
-                                    Manage system-wide fees and rates. Changes apply immediately.
+                                    Manage system-wide fees and rates by category. Changes apply immediately.
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {data.settings.map((setting, index) => (
-                                        <div key={setting.key} className="space-y-2">
-                                            <Label htmlFor={setting.key}>{setting.description}</Label>
-                                            <Input
-                                                id={setting.key}
-                                                value={setting.value}
-                                                onChange={(e) => handleChange(index, e.target.value)}
-                                                className="font-mono"
-                                            />
+                                {categorizedSettings.map((category) => (
+                                    <div key={category.key} className="space-y-4">
+                                        <div>
+                                            <h3 className="text-base font-semibold text-gray-900">{category.title}</h3>
+                                            <p className="text-sm text-gray-500">{category.description}</p>
                                         </div>
-                                    ))}
-                                </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            {category.items.map((setting) => {
+                                                const settingIndex = data.settings.findIndex(item => item.key === setting.key)
+                                                return (
+                                                    <div key={setting.key} className="space-y-2">
+                                                        <Label htmlFor={setting.key}>{setting.description}</Label>
+                                                        <Input
+                                                            id={setting.key}
+                                                            value={setting.value}
+                                                            onChange={(e) => handleChange(settingIndex, e.target.value)}
+                                                            className="font-mono"
+                                                        />
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    </div>
+                                ))}
                             </CardContent>
                             <div className="flex items-center justify-between p-6 border-t bg-slate-50 rounded-b-lg">
                                 <p className="text-sm text-gray-500">

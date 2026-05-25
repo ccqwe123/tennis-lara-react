@@ -109,7 +109,7 @@ export default function AdminDashboard({ stats, chart_data, pie_data = [], reven
         month: '2-digit',
         day: '2-digit'
     }).format(new Date());
-    console.log(stats)
+    
     const [dateFrom, setDateFrom] = useState(filters.date_from || manilaDate)
     const [dateTo, setDateTo] = useState(filters.date_to || manilaDate)
     const [showPaymentDialog, setShowPaymentDialog] = useState(false)

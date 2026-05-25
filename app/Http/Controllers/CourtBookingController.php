@@ -215,8 +215,10 @@ class CourtBookingController extends Controller
             'payment_method' => 'required|in:cash,gcash',
             'with_trainer' => 'boolean',
             'picker_selection' => 'nullable|array',
+            'umpire_selection' => 'nullable|array',
             'category' => 'required|in:single,double',
             'priest_count' => 'nullable|integer|min:0',
+            'with_ball' => 'boolean',
         ]);
 
         // Determine effective user ID
@@ -243,30 +245,40 @@ class CourtBookingController extends Controller
             }
         }
 
-        $rate = 150; // Default Non-member rate
+        $normalizeUserType = str_replace('-', '_', $userType);
+        $matrixKey = "fee_{$normalizeUserType}_{$request->schedule_type}_{$request->category}";
 
-        if ($userType === 'member') {
-            $rate = $request->schedule_type === 'day' ? 75 : 85;
-        } elseif ($userType === 'student') {
-            $rate = 45;
-        } elseif ($userType === 'non-member') {
-            $rate = 150;
-        }
+        $rateDefaults = [
+            'fee_student_day_single' => 45,
+            'fee_student_day_double' => 45,
+            'fee_student_night_single' => 45,
+            'fee_student_night_double' => 45,
+            'fee_member_day_single' => 90,
+            'fee_member_day_double' => 70,
+            'fee_member_night_single' => 90,
+            'fee_member_night_double' => 85,
+            'fee_non_member_day_single' => 90,
+            'fee_non_member_day_double' => 70,
+            'fee_non_member_night_single' => 90,
+            'fee_non_member_night_double' => 85,
+        ];
 
-        $trainerFee = $request->with_trainer ? $settings['fee_trainer'] : 0;
+        $baseRate = (float) ($settings[$matrixKey] ?? ($rateDefaults[$matrixKey] ?? 0));
+        $fallbackCourtFee = (float) ($settings[$request->schedule_type === 'day' ? 'fee_court_day' : 'fee_court_night'] ?? 0);
+        $courtFeePerGame = $userType === 'non-member'
+            ? (float) ($settings['fee_non_member_court'] ?? $fallbackCourtFee)
+            : 0;
+        $ballDiscountPerGame = $request->boolean('with_ball') ? (float) ($settings['fee_ball_discount'] ?? 20) : 0;
+        $rate = max(0, $baseRate - $ballDiscountPerGame + $courtFeePerGame);
 
-        $basePickerFee = $settings['fee_picker'] ?? 80;
-        $categoryDivisor = $request->category === 'double' ? 4 : 2;
-        $priestCount = $request->priest_count ?? 0;
-
-        // Enforce max priest count logic
+        $priestCount = (int) ($request->priest_count ?? 0);
         $maxPriest = $request->category === 'double' ? 3 : 1;
         if ($priestCount > $maxPriest) {
             $priestCount = $maxPriest;
         }
 
-        $pickerDivisor = max(1, $categoryDivisor - $priestCount);
-        $pickerFeePerGame = $basePickerFee / $pickerDivisor;
+        $trainerFee = $request->with_trainer ? (float) ($settings['fee_trainer'] ?? 200) : 0;
+        $pickerFeePerGame = (float) ($settings['fee_picker'] ?? 40);
 
         $pickersCount = 0;
         if ($request->has('picker_selection') && is_array($request->picker_selection)) {
@@ -275,7 +287,14 @@ class CourtBookingController extends Controller
         }
         $totalPickerFee = $pickersCount * $pickerFeePerGame;
 
-        $subtotal = ($rate * $request->games_count) + ($trainerFee * $request->games_count) + $totalPickerFee;
+        $umpireFeePerGame = (float) ($settings['fee_umpire'] ?? 50);
+        $umpireCount = 0;
+        if ($request->has('umpire_selection') && is_array($request->umpire_selection)) {
+            $umpireCount = count(array_filter($request->umpire_selection));
+        }
+        $totalUmpireFee = $umpireCount * $umpireFeePerGame;
+
+        $subtotal = ($rate * $request->games_count) + ($trainerFee * $request->games_count) + $totalPickerFee + $totalUmpireFee;
         $discount = 0; // Discount logic removed
 
         $total = $subtotal;
@@ -294,7 +313,8 @@ class CourtBookingController extends Controller
             'booking_date' => $request->booking_date,
             'games_count' => $request->games_count,
             'with_trainer' => $request->with_trainer ?? false,
-            'picker_selection' => json_encode($request->picker_selection), // Store selection
+            'picker_selection' => json_encode($request->picker_selection),
+            'umpire_selection' => json_encode($request->umpire_selection),
             'category' => $request->category,
             'priest_count' => $priestCount,
             'payment_method' => $request->payment_method,

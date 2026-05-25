@@ -1,7 +1,7 @@
 import { HeaderNotifications } from "@/Components/HeaderNotifications"
 import { HeaderUserMenu } from "@/Components/HeaderUserMenu"
 import { usePage } from "@inertiajs/react"
-import { ReactNode } from "react"
+import { ReactNode, Fragment } from "react"
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/Components/ui/sidebar"
 import { AppSidebar } from "@/Components/ui/app-sidebar"
 import { Separator } from "@/Components/ui/separator"
@@ -39,18 +39,20 @@ export default function AuthenticatedLayout({
                         <Breadcrumb>
                             <BreadcrumbList>
                                 {breadcrumbs.map((breadcrumb, index) => (
-                                    <BreadcrumbItem key={index}>
-                                        {breadcrumb.href ? (
-                                            <BreadcrumbLink href={breadcrumb.href}>
-                                                {breadcrumb.label}
-                                            </BreadcrumbLink>
-                                        ) : (
-                                            <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
-                                        )}
+                                    <Fragment key={index}>
+                                        <BreadcrumbItem>
+                                            {breadcrumb.href ? (
+                                                <BreadcrumbLink href={breadcrumb.href}>
+                                                    {breadcrumb.label}
+                                                </BreadcrumbLink>
+                                            ) : (
+                                                <BreadcrumbPage>{breadcrumb.label}</BreadcrumbPage>
+                                            )}
+                                        </BreadcrumbItem>
                                         {index < breadcrumbs.length - 1 && (
                                             <BreadcrumbSeparator />
                                         )}
-                                    </BreadcrumbItem>
+                                    </Fragment>
                                 ))}
                             </BreadcrumbList>
                         </Breadcrumb>

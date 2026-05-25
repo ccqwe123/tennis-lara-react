@@ -11,11 +11,13 @@ function Dialog({
   return <DialogPrimitive.Root data-slot="dialog" {...props} />
 }
 
-function DialogTrigger({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Trigger>) {
-  return <DialogPrimitive.Trigger data-slot="dialog-trigger" {...props} />
-}
+const DialogTrigger = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof DialogPrimitive.Trigger>
+>((props, ref) => (
+  <DialogPrimitive.Trigger ref={ref} data-slot="dialog-trigger" {...props} />
+))
+DialogTrigger.displayName = "DialogTrigger"
 
 function DialogPortal({
   ...props
@@ -23,24 +25,26 @@ function DialogPortal({
   return <DialogPrimitive.Portal data-slot="dialog-portal" {...props} />
 }
 
-function DialogClose({
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Close>) {
-  return <DialogPrimitive.Close data-slot="dialog-close" {...props} />
-}
+const DialogClose = React.forwardRef<
+  HTMLButtonElement,
+  React.ComponentProps<typeof DialogPrimitive.Close>
+>((props, ref) => (
+  <DialogPrimitive.Close ref={ref} data-slot="dialog-close" {...props} />
+))
+DialogClose.displayName = "DialogClose"
 
-function DialogOverlay({
-  className,
-  ...props
-}: React.ComponentProps<typeof DialogPrimitive.Overlay>) {
-  return (
-    <DialogPrimitive.Overlay
-      data-slot="dialog-overlay"
-      className={cn("data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 bg-black/80 duration-200 supports-backdrop-filter:backdrop-blur-sm fixed inset-0 isolate z-50", className)}
-      {...props}
-    />
-  )
-}
+const DialogOverlay = React.forwardRef<
+  HTMLDivElement,
+  React.ComponentProps<typeof DialogPrimitive.Overlay>
+>(({ className, ...props }, ref) => (
+  <DialogPrimitive.Overlay
+    ref={ref}
+    data-slot="dialog-overlay"
+    className={cn("data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 bg-black/80 duration-200 supports-backdrop-filter:backdrop-blur-sm fixed inset-0 isolate z-50", className)}
+    {...props}
+  />
+))
+DialogOverlay.displayName = "DialogOverlay"
 
 function DialogContent({
   className,
